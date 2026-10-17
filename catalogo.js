@@ -96,7 +96,7 @@ function readContact(form,name,prefix){
  const g=k=>(form.querySelector(`#${prefix}_${k}`)?.value||'').trim();
  return {contact_pref:form.querySelector(`input[name="${name}"]:checked`).value,phone:g('phone').slice(0,30),instagram:g('instagram').replace(/^https?:\/\/(www\.)?instagram\.com\//,'').replace(/\/$/,'').slice(0,60),email:g('email').slice(0,120)};
 }
-function validate(form){const bad=[...form.querySelectorAll('[required]')].find(i=>i.type==='checkbox'?!i.checked:!i.value.trim());if(bad){bad.focus();return bad.type==='checkbox'?'Marca la casilla para poder enviarlo':'Completa los campos marcados'}const em=form.querySelector('input[type=email]');if(em&&em.value&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em.value))return 'Revisa el email';return ''}
+function validate(form){const bad=[...form.querySelectorAll('[required]')].find(i=>i.type==='checkbox'?!i.checked:!i.value.trim());if(bad){bad.focus();return bad.type==='checkbox'?'Marca la casilla para poder enviarlo':'Completa los campos marcados'}const em=form.querySelector('input[type=email]');if(em&&em.value&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em.value))return 'Revisa el email';const ph=form.querySelector('input[type=tel]');if(ph&&ph.value.trim()&&ph.value.replace(/\D/g,'').length<9){ph.focus();return 'Revisa el teléfono: escribe el número completo (9 cifras, o con prefijo si no es de España)'}return ''}
 async function send(row,form,btn,doneHtml){
  if(form.querySelector('.hp')?.value)return;
  const err=validate(form);const msg=form.querySelector('.form-msg');if(err){msg.textContent=err;msg.className='form-msg err';return}
