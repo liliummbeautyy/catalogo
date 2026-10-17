@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lilium Beauty · Catálogo de diseños de uñas</title>
+<meta name="description" content="Diseños de uñas hechos a mano por Lilium Beauty. Elige tu diseño y pídelo en un minuto.">
+<meta property="og:title" content="Lilium Beauty · Catálogo de diseños">
+<meta property="og:description" content="Diseños de uñas hechos a mano, a tu medida. Elige el tuyo y pídelo.">
+<meta property="og:image" content="assets/icon-192.png">
+<meta name="theme-color" content="#fbeee9">
+<link rel="icon" href="assets/lily.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Pinyon+Script&display=swap">
+<link rel="stylesheet" href="catalogo.css?v=1">
+<script>try{const t=localStorage.getItem('lilium_cat_theme');if(t)document.documentElement.dataset.theme=t}catch{}</script>
+</head>
+<body>
+<header class="topnav">
+ <a class="tn-logo" href="#inicio" aria-label="Lilium Beauty, inicio"><img class="only-light" src="assets/logo.webp" alt="Lilium Beauty"><img class="only-dark" src="assets/logo-dark.webp" alt=""></a>
+ <nav class="tn-links"><a href="#disenos">Diseños</a><a href="#sobre">Sobre mí</a><a href="#contacto">Contacto</a></nav>
+ <button class="theme-toggle" id="themeBtn" aria-label="Cambiar modo claro u oscuro"><span class="tt-sun"></span><span class="tt-moon"></span></button>
+</header>
+
+<main>
+ <section class="hero" id="inicio">
+  <div class="hero-art" aria-hidden="true"></div>
+  <div class="hero-stamps" aria-hidden="true">
+   <img src="assets/stamps/flores.webp" alt="" style="--r:-8deg" class="hs1"><img src="assets/stamps/cisne.webp" alt="" style="--r:6deg" class="hs2"><img src="assets/stamps/nippon.webp" alt="" style="--r:-4deg" class="hs3"><img src="assets/stamps/love.webp" alt="" style="--r:9deg" class="hs4">
+  </div>
+  <div class="hero-in">
+   <img class="hero-logo only-light" src="assets/logo.webp" alt="Lilium Beauty"><img class="hero-logo only-dark" src="assets/logo-dark.webp" alt="">
+   <div class="rule"><span></span>✧<span></span></div>
+   <p class="tagline" id="tagline">Tu espacio de uñas</p>
+   <p class="hero-text" id="heroText">Diseños de uñas hechos a mano, a tu medida.</p>
+   <div class="hero-btns"><a class="btn" href="#disenos">Ver diseños</a><a class="btn ghost" href="#contacto">Escríbeme</a></div>
+  </div>
+ </section>
+
+ <section class="section" id="disenos">
+  <header class="sec-head"><h2 class="script">Mis diseños</h2><p class="muted">Elige el que te enamore y pídelo en un minuto. Todos se adaptan a tus medidas.</p></header>
+  <div class="chips" id="cats" role="tablist" aria-label="Filtrar por categoría"></div>
+  <div class="grid" id="grid"><p class="muted center loading">Cargando diseños…</p></div>
+ </section>
+
+ <section class="section about" id="sobre">
+  <div class="about-card">
+   <img class="about-stamp" src="assets/stamps/lirios.webp" alt="" aria-hidden="true" style="--r:-6deg">
+   <h2 class="script">Sobre mí</h2>
+   <p id="aboutText"></p>
+   <ul class="steps">
+    <li><b>1</b><span><strong>Elige tu diseño</strong>o cuéntame tu idea.</span></li>
+    <li><b>2</b><span><strong>Te escribo</strong>para tus medidas y detalles.</span></li>
+    <li><b>3</b><span><strong>Lo creo para ti</strong>a mano, con todo el cariño.</span></li>
+   </ul>
+  </div>
+ </section>
+
+ <section class="section contact" id="contacto">
+  <header class="sec-head"><h2 class="script">Escríbeme</h2><p class="muted">¿Tienes una idea, una duda o quieres algo personalizado? Te contesto encantada.</p></header>
+  <div class="contact-grid">
+   <div class="contact-links" id="contactLinks"></div>
+   <form class="card form" id="contactForm" novalidate>
+    <h3>Déjame tu mensaje</h3>
+    <div class="field"><label for="c_name">Tu nombre</label><input id="c_name" name="name" maxlength="80" autocomplete="name" required></div>
+    <div class="field"><span class="label">¿Cómo prefieres que te conteste?</span><div class="seg" data-name="c_pref"></div></div>
+    <div class="contact-fields" data-for="c_pref"></div>
+    <div class="field"><label for="c_msg">Mensaje</label><textarea id="c_msg" rows="4" maxlength="1000" required placeholder="Cuéntame qué te gustaría…"></textarea></div>
+    <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <label class="consent"><input type="checkbox" required><span>Acepto que Lilium Beauty use estos datos solo para responderme.</span></label>
+    <button class="btn wide" type="submit">Enviar mensaje</button>
+    <p class="form-msg" role="status"></p>
+   </form>
+  </div>
+ </section>
+</main>
+
+<footer class="foot">
+ <img class="only-light" src="assets/logo.webp" alt="Lilium Beauty"><img class="only-dark" src="assets/logo-dark.webp" alt="">
+ <p class="muted">Diseños hechos a mano · <span id="footCity"></span></p>
+ <p class="muted small">Tus datos solo se usan para responderte y no se comparten con nadie.</p>
+</footer>
+
+<div id="modal-root"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
+<script src="catalogo.js?v=1"></script>
+</body>
+</html>
