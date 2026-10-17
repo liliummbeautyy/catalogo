@@ -2,6 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://yrdtetbtjkzqubpsxswo.supabase.co; connect-src https://yrdtetbtjkzqubpsxswo.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Lilium Beauty · Catálogo de diseños de uñas</title>
 <meta name="description" content="Diseños de uñas hechos a mano por Lilium Beauty. Elige tu diseño y pídelo en un minuto.">
@@ -14,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Pinyon+Script&display=swap">
-<link rel="stylesheet" href="catalogo.css?v=1">
+<link rel="stylesheet" href="catalogo.css?v=3">
 <script>try{const t=localStorage.getItem('lilium_cat_theme');if(t)document.documentElement.dataset.theme=t}catch{}</script>
 </head>
 <body>
@@ -69,7 +71,7 @@
     <div class="contact-fields" data-for="c_pref"></div>
     <div class="field"><label for="c_msg">Mensaje</label><textarea id="c_msg" rows="4" maxlength="1000" required placeholder="Cuéntame qué te gustaría…"></textarea></div>
     <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-    <label class="consent"><input type="checkbox" required><span>Acepto que Lilium Beauty use estos datos solo para responderme.</span></label>
+    <div id="contactConsent"></div>
     <button class="btn wide" type="submit">Enviar mensaje</button>
     <p class="form-msg" role="status"></p>
    </form>
@@ -80,12 +82,13 @@
 <footer class="foot">
  <img class="only-light" src="assets/logo.webp" alt="Lilium Beauty"><img class="only-dark" src="assets/logo-dark.webp" alt="">
  <p class="muted">Diseños hechos a mano · <span id="footCity"></span></p>
- <p class="muted small">Tus datos solo se usan para responderte y no se comparten con nadie.</p>
+ <nav class="legal-links" aria-label="Información legal"><button type="button" class="link" onclick="openLegal('aviso')">Aviso legal</button><span>·</span><button type="button" class="link" onclick="openLegal('privacidad')">Privacidad</button><span>·</span><button type="button" class="link" onclick="openLegal('cookies')">Cookies</button></nav>
+ <p class="muted small">Sin cookies de publicidad ni de análisis. Tus datos solo los ve la titular.</p>
 </footer>
 
 <div id="modal-root"></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-<script src="catalogo.js?v=1"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
+<script src="catalogo.js?v=3"></script>
 </body>
 </html>

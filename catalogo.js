@@ -101,7 +101,7 @@ async function send(row,form,btn,doneHtml){
  if(form.querySelector('.hp')?.value)return;
  const err=validate(form);const msg=form.querySelector('.form-msg');if(err){msg.textContent=err;msg.className='form-msg err';return}
  btn.disabled=true;const txt=btn.textContent;btn.textContent='Enviando…';msg.textContent='';
- const {error}=await sb.from('catalog_requests').insert({owner:S.profile.owner,...row});
+ const {error}=await sb.from('catalog_requests').insert({owner:S.profile.owner,...row,consent:true});
  if(error){btn.disabled=false;btn.textContent=txt;msg.className='form-msg err';msg.textContent=/Demasiados/.test(error.message)?error.message:'No se ha podido enviar. Revisa tu conexión o escríbeme por WhatsApp.';return}
  doneHtml();
 }
@@ -119,7 +119,7 @@ function openOrder(id){
   <div class="grid-2"><div class="field"><label for="o_shape">Forma</label><input id="o_shape" list="oShapes" maxlength="40" value="${esc(d.shape||'')}"><datalist id="oShapes">${['Almond','Coffin','Cuadrada','Redonda','Stiletto'].map(x=>`<option value="${x}">`).join('')}</datalist></div><div class="field"><label for="o_len">Largo</label><input id="o_len" maxlength="20" value="${esc(d.length||'')}"></div></div>
   <div class="field"><label for="o_msg">¿Algo más? <small>(opcional)</small></label><textarea id="o_msg" rows="3" maxlength="1000" placeholder="Colores, fecha que lo necesitas, si es para un evento…"></textarea></div>
   <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-  <label class="consent"><input type="checkbox" required><span>Acepto que ${esc(S.profile.business)} use estos datos solo para gestionar mi pedido.</span></label>
+  ${consentHtml('gestionar tu pedido y contactarte sobre él')}
   <button class="btn wide" type="submit">Enviar pedido</button>
   <p class="form-msg" role="status"></p>
   <p class="muted small center">No pagas nada ahora: primero te escribo para confirmarlo todo.</p>
@@ -136,6 +136,7 @@ function openOrder(id){
 }
 
 function paintContact(){
+ const cc=$('#contactConsent');if(cc)cc.outerHTML=consentHtml('responder a tu mensaje');
  const p=S.profile;const links=[];
  if(p.whatsapp)links.push(`<a class="clink" href="${esc(waLink(p.whatsapp,'Hola 🌸 He visto tu catálogo y me gustaría información'))}" target="_blank" rel="noopener">${ic('whatsapp')}<span><b>WhatsApp</b><small>${esc(p.whatsapp)}</small></span></a>`);
  if(p.instagram)links.push(`<a class="clink" href="https://instagram.com/${esc(p.instagram.replace(/^@/,''))}" target="_blank" rel="noopener">${ic('insta')}<span><b>Instagram</b><small>${esc(p.instagram.startsWith('@')?p.instagram:'@'+p.instagram)}</small></span></a>`);
@@ -149,3 +150,45 @@ function paintContact(){
  form.addEventListener('submit',e=>{e.preventDefault();const c=readContact(form,'c_pref','c');send({kind:'contacto',name:$('#c_name').value.trim().slice(0,80),...c,message:$('#c_msg').value.trim().slice(0,1000)},form,form.querySelector('button[type=submit]'),()=>{form.innerHTML=thanksHtml('¡Mensaje enviado!')})});
 }
 load();
+
+/* ---------- Legal: RGPD, LSSI y cookies ---------- */
+const PRIVACY_VERSION='2026-10';
+function L(){const p=S.profile||{};return {biz:p.business||'Lilium Beauty',name:p.legal_name||'',nif:p.legal_id||'',addr:p.legal_address||'',email:p.email||'',city:p.city||'',wa:p.whatsapp||''}}
+function who(){const l=L();return esc(l.name||l.biz)+(l.nif?` (NIF ${esc(l.nif)})`:'')}
+function contactLine(){const l=L();return [l.email&&`<a href="mailto:${esc(l.email)}">${esc(l.email)}</a>`,l.wa&&`WhatsApp ${esc(l.wa)}`].filter(Boolean).join(' · ')||'el formulario de contacto de esta web'}
+function consentHtml(purpose){const l=L();return `<div class="privacy-box"><p><b>Protección de datos.</b> Responsable: ${who()}. Finalidad: ${purpose}. Legitimación: tu consentimiento. No se ceden a terceros; se alojan cifrados en la UE. Puedes acceder, rectificar o suprimir tus datos y ejercer tus demás derechos como se explica en la <button type="button" class="link" onclick="openLegal('privacidad')">política de privacidad</button>.</p></div>
+ <label class="consent"><input type="checkbox" required><span>Tengo 14 años o más, he leído la <button type="button" class="link" onclick="openLegal('privacidad')">política de privacidad</button> y acepto que ${esc(l.biz)} use estos datos para ${purpose}.</span></label>`}
+function openLegal(kind){
+ const l=L();const missing=!l.name||!l.nif;
+ const pend=missing?'<p class="legal-pend">Datos de la titular pendientes de completar.</p>':'';
+ const html={
+ aviso:`<h2>Aviso legal</h2>${pend}<p>En cumplimiento de la Ley 34/2002, de servicios de la sociedad de la información (LSSI), se informa de los datos de la titular de esta web:</p>
+  <ul><li><b>Titular:</b> ${esc(l.name||'—')}</li><li><b>NIF:</b> ${esc(l.nif||'—')}</li><li><b>Nombre comercial:</b> ${esc(l.biz)}</li>${l.addr?`<li><b>Domicilio:</b> ${esc(l.addr)}</li>`:''}<li><b>Contacto:</b> ${contactLine()}</li></ul>
+  <h3>Uso de la web</h3><p>Esta web muestra los diseños de uñas de ${esc(l.biz)} y permite solicitar información o hacer pedidos. Enviar un pedido no supone una compra: es una solicitud que se confirma después por mensaje, con precio, plazos y forma de pago.</p>
+  <h3>Propiedad intelectual</h3><p>Las fotos, diseños y textos son de ${esc(l.biz)}. No se pueden copiar ni usar sin permiso.</p>
+  <h3>Responsabilidad</h3><p>Los precios orientativos pueden cambiar según medidas y detalles. Se intenta que la información sea exacta, pero puede contener errores que se corregirán en cuanto se detecten.</p>
+  <h3>Legislación</h3><p>Se aplica la legislación española. Si eres consumidora, tienes los derechos que te reconoce la normativa de consumo.</p>`,
+ privacidad:`<h2>Política de privacidad</h2>${pend}<p>Conforme al Reglamento (UE) 2016/679 (RGPD) y la Ley Orgánica 3/2018 (LOPDGDD):</p>
+  <h3>Responsable</h3><p>${who()}${l.name?' · '+esc(l.biz):''}${l.addr?' · '+esc(l.addr):''}. Contacto: ${contactLine()}.</p>
+  <h3>Qué datos se tratan</h3><p>Los que escribes en los formularios: nombre, teléfono, Instagram o email, tu preferencia de contacto, tus medidas y forma de uñas (si las das) y tu mensaje. No pidas ni envíes datos de salud por aquí; si tienes alguna alergia, coméntalo directamente por mensaje.</p>
+  <h3>Para qué</h3><p>Responder a tus mensajes, gestionar tus pedidos y contactarte sobre ellos. No se usan para publicidad ni se toman decisiones automatizadas.</p>
+  <h3>Base legal</h3><p>Tu consentimiento (art. 6.1.a RGPD) al marcar la casilla y, si haces un pedido, la gestión de esa relación precontractual (art. 6.1.b). Puedes retirar tu consentimiento cuando quieras.</p>
+  <h3>Cuánto tiempo</h3><p>Los mensajes y pedidos se borran automáticamente un año después de cerrarse y, en todo caso, a los dos años. Si pasas a ser clienta, se conservan mientras lo seas y hasta 2 años después de tu último servicio, salvo obligación legal (por ejemplo, fiscal).</p>
+  <h3>Quién los ve</h3><p>Solo la titular. No se ceden a terceros. Se alojan en Supabase (servidores en Irlanda, UE) como encargado del tratamiento, con contrato que garantiza su protección. La web se publica en GitHub Pages y usa Google Fonts y jsDelivr para tipografías y código. Estos servicios pueden recibir tu dirección IP y están acogidos al Marco de Privacidad de Datos UE-EE. UU.</p>
+  <h3>Tus derechos</h3><p>Puedes pedir acceso, rectificación, supresión, oposición, limitación y portabilidad de tus datos escribiendo a ${contactLine()}. Si crees que no se han respetado, puedes reclamar ante la Agencia Española de Protección de Datos (<a href="https://www.aepd.es" target="_blank" rel="noopener">www.aepd.es</a>).</p>
+  <h3>Menores</h3><p>Si tienes menos de 14 años, pide a tu madre, padre o tutor que contacte por ti.</p>
+  <h3>Seguridad</h3><p>La conexión está cifrada (HTTPS). Lo que envías solo lo puede leer la titular. Nadie más tiene acceso, ni siquiera desde esta web.</p>
+  <p class="muted small">Versión ${PRIVACY_VERSION}.</p>`,
+ cookies:`<h2>Política de cookies</h2><p>Esta web <b>no usa cookies</b> ni herramientas de publicidad o de estadísticas. No se te rastrea.</p>
+  <p>Solo guarda en tu navegador (almacenamiento local) dos preferencias técnicas, permitidas sin consentimiento por el art. 22.2 de la LSSI:</p>
+  <table class="cookie-table"><tr><th>Nombre</th><th>Para qué</th><th>Duración</th></tr><tr><td>lilium_cat_theme</td><td>Recordar si prefieres el modo claro u oscuro</td><td>Hasta que la borres</td></tr><tr><td>lilium_cat_cookies</td><td>Recordar que ya has visto este aviso</td><td>Hasta que la borres</td></tr></table>
+  <p>Las tipografías (Google Fonts) y el código de conexión (jsDelivr) se descargan de servicios externos, que reciben tu dirección IP para poder enviártelos. Puedes borrar estos datos desde los ajustes de tu navegador.</p>`}[kind];
+ openModal(`<div class="legal">${html}</div>`,'legal-card');
+}
+function cookieBar(){
+ try{if(localStorage.getItem('lilium_cat_cookies')===PRIVACY_VERSION)return}catch{}
+ const d=document.createElement('div');d.className='cookie-bar';d.id='cookieBar';d.setAttribute('role','region');d.setAttribute('aria-label','Aviso de cookies');
+ d.innerHTML=`<p>🍪 Esta web <b>no usa cookies</b> de publicidad ni de análisis. Solo recuerda tu preferencia de modo claro u oscuro.</p><div><button type="button" class="link" onclick="openLegal('cookies')">Más información</button><button type="button" class="btn small" onclick="try{localStorage.setItem('lilium_cat_cookies',PRIVACY_VERSION)}catch{};this.closest('.cookie-bar').remove()">Entendido</button></div>`;
+ document.body.appendChild(d);
+}
+setTimeout(cookieBar,700);

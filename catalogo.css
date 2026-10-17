@@ -208,3 +208,25 @@ a.clink:hover{border-color:var(--accent-2)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 .sizes[hidden]{display:none}
 html,body{overflow-x:clip}
+
+/* ---- Legal, privacidad y cookies ---- */
+.link{background:none;border:0;padding:0;font:inherit;color:var(--accent-deep,var(--accent));text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+:root[data-theme="dark"] .link{color:var(--accent-2,var(--accent))}
+.privacy-box{font-size:13px;line-height:1.45;color:var(--muted);background:color-mix(in srgb,var(--accent) 6%,transparent);border:1px solid var(--line-2);border-radius:12px;padding:10px 12px;margin:4px 0 10px}
+.privacy-box p{margin:0}.privacy-box .link{font-size:13px}
+.consent .link{font-size:inherit}
+.legal-links{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:8px 0 2px;font-size:15px;color:var(--muted)}
+.modal-card.legal-card{width:min(720px,100%)}
+.legal{font-size:16px;line-height:1.6;color:var(--ink-2)}
+.legal h2{font-family:var(--script,inherit);font-size:40px;font-weight:400;margin:0 0 8px;color:var(--ink)}
+.legal h3{font-size:18px;margin:18px 0 4px;color:var(--ink)}
+.legal ul{padding-left:20px}.legal li{margin:3px 0}
+.legal a{color:inherit}
+.legal-pend{padding:8px 12px;border-radius:10px;background:color-mix(in srgb,#e7995a 18%,transparent);font-size:14px}
+.cookie-table{width:100%;border-collapse:collapse;font-size:14px;margin:10px 0}
+.cookie-table th,.cookie-table td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.cookie-bar{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:30;width:min(720px,calc(100% - 24px));display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:18px;background:var(--card-solid);border:1px solid var(--line);box-shadow:0 18px 40px -18px rgba(80,30,40,.45);animation:cbIn .3s ease}
+.cookie-bar p{margin:0;flex:1;font-size:15px;line-height:1.4}
+.cookie-bar>div{display:flex;align-items:center;gap:12px;flex:none}
+@keyframes cbIn{from{opacity:0;transform:translate(-50%,12px)}}
+@media (max-width:640px){.cookie-bar{flex-wrap:wrap}.cookie-bar>div{width:100%;justify-content:flex-end}.legal h2{font-size:34px}}
