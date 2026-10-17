@@ -142,7 +142,7 @@ function paintContact(){
  if(p.tiktok)links.push(`<a class="clink" href="https://www.tiktok.com/@${esc(p.tiktok.replace(/^@/,''))}" target="_blank" rel="noopener">${ic('tiktok')}<span><b>TikTok</b><small>${esc(p.tiktok.startsWith('@')?p.tiktok:'@'+p.tiktok)}</small></span></a>`);
  if(p.email)links.push(`<a class="clink" href="mailto:${esc(p.email)}">${ic('mail')}<span><b>Email</b><small>${esc(p.email)}</small></span></a>`);
  if(p.city)links.push(`<div class="clink">${ic('pin')}<span><b>Dónde estoy</b><small>${esc(p.city)}</small></span></div>`);
- $('#contactLinks').innerHTML=`<img class="cl-stamp" src="assets/stamps/avion.webp" alt="" aria-hidden="true" style="--r:6deg">`+(links.join('')||'<p class="muted">Escríbeme con el formulario y te contesto pronto.</p>');
+ const box=$('#contactLinks');box.closest('.contact-grid').classList.toggle('solo',!links.length);box.hidden=!links.length;box.innerHTML=`<img class="cl-stamp" src="assets/stamps/avion.webp" alt="" aria-hidden="true" style="--r:6deg">`+links.join('');
  const form=$('#contactForm');
  if(!p.open){form.innerHTML='<h3>Ahora mismo no acepto pedidos nuevos</h3><p class="muted">Puedes seguir viendo mis diseños. Vuelve pronto 🌸</p>';return}
  wireSeg(form,'c_pref','c');
