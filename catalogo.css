@@ -111,6 +111,8 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 
 /* Contacto */
 .contact-grid{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:24px;align-items:start}
+.contact-grid.solo{grid-template-columns:minmax(0,680px);justify-content:center}
+.contact-links[hidden]{display:none}
 .contact-links{position:relative;display:flex;flex-direction:column;gap:12px}
 .cl-stamp{position:absolute;top:-28px;right:-6px;width:70px;transform:rotate(var(--r));filter:drop-shadow(0 6px 8px rgba(120,50,62,.25))}
 .clink{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:14px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);text-decoration:none;color:var(--ink)}
