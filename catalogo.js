@@ -2,7 +2,7 @@
 'use strict';
 const CFG={url:'https://yrdtetbtjkzqubpsxswo.supabase.co',key:'sb_publishable_Sr5qJr46wo0kKKU6Sn2_1A_O30n2GNZ',slug:new URLSearchParams(location.search).get('u')||'lilium',bucket:'catalog'};
 const sb=window.supabase?.createClient?window.supabase.createClient(CFG.url,CFG.key,{auth:{persistSession:false,autoRefreshToken:false}}):null;
-const S={profile:null,designs:[],cat:'Todos'};
+const S={profile:null,designs:[],album:[],cat:'Todos'};
 const FINGERS=['Pulgar','Índice','Medio','Anular','Meñique'];
 const PREFS=[['whatsapp','WhatsApp'],['instagram','Instagram'],['email','Email'],['llamada','Llamada']];
 const STAMPS=['flores','botanical','love','nippon','mariposa','ciruelo','rosa','fresas','gato','lirios'];
@@ -36,8 +36,8 @@ async function load(){
   const {data:p,error:e1}=await sb.from('catalog_profile').select('*').eq('slug',CFG.slug).maybeSingle();
   if(e1)throw e1;if(!p)throw new Error('Catálogo no encontrado');S.profile=p;
   const {data:d,error:e2}=await sb.from('catalog_designs').select('*').eq('owner',p.owner).eq('visible',true).order('sort',{ascending:true}).order('created_at',{ascending:false});
-  if(e2)throw e2;S.designs=d||[];
-  paintProfile();paintCats();paintGrid();paintContact();
+  if(e2)throw e2;S.designs=(d||[]).filter(x=>!x.album);S.album=(d||[]).filter(x=>x.album&&x.photos?.length);
+  paintProfile();paintCats();paintGrid();paintAlbum();paintCustom();paintContact();
  }catch(e){console.error(e);$('#grid').innerHTML='<p class="muted center">No se ha podido cargar el catálogo ahora mismo. Prueba de nuevo en un momento.</p>'}
 }
 function paintProfile(){
@@ -54,7 +54,7 @@ function paintCats(){
 }
 function paintGrid(){
  const list=S.designs.filter(d=>S.cat==='Todos'||d.category===S.cat);
- if(!S.designs.length){$('#grid').innerHTML=`<div class="soon"><img src="assets/stamps/lirios.webp" alt="" style="--r:-5deg"><p class="script">Muy pronto…</p><p class="muted">Estoy preparando mis primeros diseños. Mientras, escríbeme y te enseño ideas.</p><a class="btn" href="#contacto">Escríbeme</a></div>`;return}
+ if(!S.designs.length){$('#grid').innerHTML=S.album.length?`<div class="soon"><img src="assets/stamps/lirios.webp" alt="" style="--r:-5deg"><p class="script">Muy pronto…</p><p class="muted">Estoy preparando diseños a la venta. Mientras, mira mi álbum o pide uno a tu estilo.</p><div class="hero-btns"><a class="btn" href="#album">Ver mi álbum</a><a class="btn ghost" href="#propio">Diseño a tu estilo</a></div></div>`:`<div class="soon"><img src="assets/stamps/lirios.webp" alt="" style="--r:-5deg"><p class="script">Muy pronto…</p><p class="muted">Estoy preparando mis primeros diseños. Mientras, pídeme uno a tu estilo o escríbeme y te enseño ideas.</p><a class="btn" href="#propio">Diseño a tu estilo</a></div>`;return}
  $('#grid').innerHTML=list.map((d,i)=>`<article class="dcard">
   ${i%4===0?`<img class="sticker" src="assets/stamps/${STAMPS[(i/4)%STAMPS.length]}.webp" alt="" aria-hidden="true" style="--r:${i%8?7:-7}deg">`:''}
   <button class="dphoto" data-view="${d.id}" aria-label="Ver ${esc(d.name)}">${d.photos?.[0]?`<img src="${esc(photo(d.photos[0]))}" alt="${esc(d.name)}" loading="lazy">`:`<span class="nophoto">${ic('heart')}</span>`}${d.photos?.length>1?`<em>${d.photos.length} fotos</em>`:''}</button>
@@ -192,3 +192,77 @@ function cookieBar(){
  document.body.appendChild(d);
 }
 setTimeout(cookieBar,700);
+
+/* ---------- Álbum: fotos sin nombre ni precio ---------- */
+function albumTiles(){return S.album.flatMap(it=>(it.photos||[]).map(p=>({it,p})))}
+function paintAlbum(){
+ const tiles=albumTiles();$('#album').hidden=!tiles.length;$('#navAlbum').hidden=!tiles.length;if(!tiles.length)return;
+ $('#albumGrid').innerHTML=tiles.map((t,i)=>`<button class="atile" data-a="${i}" aria-label="Ver foto ${i+1} del álbum"><img src="${esc(photo(t.p))}" alt="${esc(t.it.name||'Trabajo de uñas')}" loading="lazy">${S.profile.open?'<span class="atile-cta">Quiero uno así</span>':''}</button>`).join('');
+ $('#albumGrid').onclick=e=>{const b=e.target.closest('[data-a]');if(b)openAlbum(+b.dataset.a)};
+}
+function openAlbum(i){
+ const tiles=albumTiles();if(!tiles.length)return;
+ openModal(`<div class="lightbox"><div class="lb-img"><img id="lbImg" alt=""><button class="gnav prev" aria-label="Foto anterior">${ic('left')}</button><button class="gnav next" aria-label="Foto siguiente">${ic('right')}</button></div>
+  <div class="lb-info"><p id="lbText" class="muted"></p><span class="lb-count" id="lbCount"></span>${S.profile.open?`<button class="btn" id="lbWant">${ic('heart')}Quiero uno así</button>`:''}</div></div>`,'wide lb-card');
+ const show=k=>{i=(k+tiles.length)%tiles.length;const t=tiles[i];$('#lbImg').src=photo(t.p);$('#lbImg').alt=t.it.name||'Trabajo de uñas';$('#lbText').textContent=[t.it.name,t.it.description].filter(Boolean).join(' · ');$('#lbCount').textContent=`${i+1} / ${tiles.length}`};
+ show(i);
+ $('.lb-img .prev').onclick=()=>show(i-1);$('.lb-img .next').onclick=()=>show(i+1);
+ if(tiles.length<2)document.querySelectorAll('.lb-img .gnav').forEach(b=>b.hidden=true);
+ let x0=null;const box=$('.lb-img');box.addEventListener('touchstart',e=>{x0=e.touches[0].clientX},{passive:true});box.addEventListener('touchend',e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;if(Math.abs(dx)>40)show(i+(dx<0?1:-1));x0=null});
+ const key=e=>{if(!$('#lbImg')){document.removeEventListener('keydown',key);return}if(e.key==='ArrowLeft')show(i-1);if(e.key==='ArrowRight')show(i+1)};document.addEventListener('keydown',key);
+ $('#lbWant')?.addEventListener('click',()=>openCustom({item:tiles[i].it,photo:tiles[i].p}));
+}
+
+/* ---------- Diseño propio ---------- */
+const STYLES=['Minimalista','Francesa','Flores','Brillos y cromados','Piedras y joyas','Pastel','Nude natural','Oscuro o gótico','Animal print','Boda o evento','Temporada (Navidad, Halloween…)','Sorpréndeme'];
+function paintCustom(){
+ const b=$('#customBtn');if(!b)return;
+ if(!S.profile.open){b.outerHTML='<p class="muted">Ahora mismo no acepto encargos nuevos. Vuelve pronto 🌸</p>';return}
+ b.onclick=()=>openCustom();
+}
+function compress(file,max=1200,q=.82){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const im=new Image();im.onerror=rej;im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);c.toBlob(b=>b?res(b):rej(new Error('img')),'image/jpeg',q)};im.src=r.result};r.readAsDataURL(file)})}
+function openCustom(ref=null){
+ if(!S.profile.open)return toast('Ahora mismo no acepto encargos nuevos');
+ const refs=[];
+ openModal(`<div class="order-head">${ref?`<img src="${esc(photo(ref.photo))}" alt="">`:`<img src="assets/stamps/mariposa.webp" alt="" class="stamp-img">`}<div><small class="muted">${ref?'Inspirado en mi álbum':'Diseño propio'}</small><h2>${ref?'Quiero uno así':'A tu estilo'}</h2><p class="muted small">Te escribo con una propuesta y el precio. No pagas nada ahora.</p></div></div>
+ <form class="form" id="customForm" novalidate>
+  <div class="field"><label for="p_name">Tu nombre</label><input id="p_name" maxlength="80" autocomplete="name" required></div>
+  <div class="field"><span class="label">¿Cómo prefieres que te contacte?</span><div class="seg" data-name="p_pref"></div></div>
+  <div class="contact-fields" data-for="p_pref"></div>
+  <div class="field"><label for="p_idea">${ref?'¿Qué cambiarías o qué te gustaría?':'Cuéntame tu idea'}</label><textarea id="p_idea" rows="4" maxlength="1000" ${ref?'':'required'} placeholder="${ref?'Igual pero en rojo, más corto, con menos piedras…':'Colores, dibujos, para qué ocasión, cuándo lo necesitas…'}"></textarea></div>
+  <div class="field"><span class="label">Estilo <small>(elige los que quieras)</small></span><div class="seg multi" id="p_styles">${STYLES.map(x=>`<label><input type="checkbox" value="${esc(x)}">${esc(x)}</label>`).join('')}</div></div>
+  <div class="field"><label for="p_colors">Colores <small>(opcional)</small></label><input id="p_colors" maxlength="80" placeholder="Rosa empolvado y dorado"></div>
+  <div class="field"><span class="label">Fotos de referencia <small>(opcional, hasta 3)</small></span><div class="refs" id="p_refs"></div></div>
+  <div class="grid-2"><div class="field"><label for="p_shape">Forma</label><input id="p_shape" list="pShapes" maxlength="40" value="${esc(ref?.item?.shape||'')}" placeholder="La que me recomiendes"><datalist id="pShapes">${['Almond','Coffin','Cuadrada','Redonda','Stiletto'].map(x=>`<option value="${x}">`).join('')}</datalist></div><div class="field"><label for="p_len">Largo</label><input id="p_len" list="pLens" maxlength="20" value="${esc(ref?.item?.length||'')}" placeholder="Corto, medio, largo"><datalist id="pLens">${['Corto','Medio','Largo','Extra largo'].map(x=>`<option value="${x}">`).join('')}</datalist></div></div>
+  <div class="field"><span class="label">Tus medidas</span><div class="seg sizes-seg">${[['measure','Me ayudas a medirme'],['know','Sé mis tallas']].map(([k,l],i)=>`<label class="${i?'':'on'}"><input type="radio" name="p_size" value="${k}" ${i?'':'checked'}>${l}</label>`).join('')}</div></div>
+  <div class="sizes" hidden>${['Izquierda','Derecha'].map(h=>`<div class="hand"><span>${h}</span>${(h==='Izquierda'?[...FINGERS].reverse():FINGERS).map(f=>`<label><small>${f}</small><input inputmode="numeric" maxlength="2" data-h="${h[0]}" aria-label="Talla ${f} mano ${h.toLowerCase()}"></label>`).join('')}</div>`).join('')}</div>
+  <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+  ${consentHtml('preparar tu diseño personalizado y contactarte sobre él')}
+  <button class="btn wide" type="submit">Enviar mi idea</button>
+  <p class="form-msg" role="status"></p>
+ </form>`,'order');
+ const form=$('#customForm');wireSeg(form,'p_pref','p');
+ form.querySelector('.sizes-seg').addEventListener('change',e=>{form.querySelectorAll('.sizes-seg label').forEach(l=>l.classList.toggle('on',l.querySelector('input').checked));form.querySelector('.sizes').hidden=e.target.value!=='know'});
+ form.querySelector('#p_styles').addEventListener('change',e=>{const l=e.target.closest('label');if(l)l.classList.toggle('on',e.target.checked)});
+ const drawRefs=()=>{$('#p_refs').innerHTML=refs.map((r,k)=>`<figure><img src="${r.url}" alt="Referencia ${k+1}"><button type="button" class="rm" data-rm="${k}" aria-label="Quitar foto">${ic('close')}</button></figure>`).join('')+(refs.length<3?`<label class="ref-add">${ic('heart')}<span>Añadir foto</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden></label>`:'')};
+ $('#p_refs').addEventListener('click',e=>{const b=e.target.closest('[data-rm]');if(!b)return;const [r]=refs.splice(+b.dataset.rm,1);URL.revokeObjectURL(r.url);drawRefs()});
+ $('#p_refs').addEventListener('change',async e=>{const files=[...(e.target.files||[])].filter(f=>/^image\//.test(f.type)).slice(0,3-refs.length);for(const f of files){try{const b=await compress(f);refs.push({blob:b,url:URL.createObjectURL(b)})}catch{toast('No se pudo leer esa foto')}}drawRefs()});
+ drawRefs();
+ form.addEventListener('submit',async e=>{e.preventDefault();if(form.querySelector('.hp')?.value)return;
+  const msg=form.querySelector('.form-msg');const err=validate(form);if(err){msg.textContent=err;msg.className='form-msg err';return}
+  const idea=$('#p_idea').value.trim();if(!ref&&!idea){msg.textContent='Cuéntame un poco tu idea';msg.className='form-msg err';return}
+  const btn=form.querySelector('button[type=submit]');btn.disabled=true;btn.textContent=refs.length?'Subiendo fotos…':'Enviando…';
+  const paths=[];
+  for(const r of refs){const path=`${S.profile.owner}/${(crypto.randomUUID?crypto.randomUUID():Date.now()+''+Math.random()).replace(/[^a-z0-9-]/gi,'')}.jpg`;const {error}=await sb.storage.from('catalog-refs').upload(path,r.blob,{contentType:'image/jpeg',upsert:false});if(error){btn.disabled=false;btn.textContent='Enviar mi idea';msg.className='form-msg err';msg.textContent='No se han podido subir las fotos. Prueba sin ellas o con otras.';return}paths.push(path)}
+  btn.disabled=false;btn.textContent='Enviar mi idea';
+  const know=form.querySelector('input[name="p_size"]:checked').value==='know';
+  const sz=h=>[...form.querySelectorAll(`.sizes input[data-h="${h}"]`)].map(i=>i.value.trim()||'-').join(' ');
+  const styles=[...form.querySelectorAll('#p_styles input:checked')].map(i=>i.value);const colors=$('#p_colors').value.trim();
+  const c=readContact(form,'p_pref','p');
+  send({kind:'propio',design_id:ref?.item?.id||null,design_name:ref?(ref.item.name||'Foto del álbum').slice(0,80):'Diseño propio',price:null,name:$('#p_name').value.trim().slice(0,80),...c,
+   style:[styles.join(', '),colors&&'Colores: '+colors].filter(Boolean).join(' · ').slice(0,300),refs:ref?['catalog:'+ref.photo,...paths].slice(0,3):paths,
+   sizes:know?`Izq: ${sz('I')} · Der: ${sz('D')}`:'Necesita que la midan',shape:$('#p_shape').value.trim().slice(0,40),length:$('#p_len').value.trim().slice(0,20),message:idea.slice(0,1000)},
+   form,btn,()=>{refs.forEach(r=>URL.revokeObjectURL(r.url));$('.modal-card').innerHTML=`<button class="close" aria-label="Cerrar" onclick="closeModal()">${ic('close')}</button>`+thanksHtml('¡Idea recibida!','Me encanta que confíes en mí. Te escribo muy pronto con una propuesta y el precio.')});
+ });
+ setTimeout(()=>$('#p_name')?.focus(),60);
+}

@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://yrdtetbtjkzqubpsxswo.supabase.co; connect-src 'self' https://yrdtetbtjkzqubpsxswo.supabase.co; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://yrdtetbtjkzqubpsxswo.supabase.co; connect-src 'self' https://yrdtetbtjkzqubpsxswo.supabase.co; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Lilium Beauty · Catálogo de diseños de uñas</title>
@@ -22,13 +22,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Pinyon+Script&display=swap">
-<link rel="stylesheet" href="catalogo.css?v=3">
+<link rel="stylesheet" href="catalogo.css?v=4">
 <script>try{const t=localStorage.getItem('lilium_cat_theme');if(t)document.documentElement.dataset.theme=t}catch{}</script>
 </head>
 <body>
 <header class="topnav">
  <a class="tn-logo" href="#inicio" aria-label="Lilium Beauty, inicio"><img class="only-light" src="assets/logo.webp" alt="Lilium Beauty"><img class="only-dark" src="assets/logo-dark.webp" alt=""></a>
- <nav class="tn-links"><a href="#disenos">Diseños</a><a href="#sobre">Sobre mí</a><a href="#contacto">Contacto</a></nav>
+ <nav class="tn-links"><a href="#disenos">Diseños</a><a href="#album" id="navAlbum" hidden>Álbum</a><a href="#propio">A tu estilo</a><a href="#sobre">Sobre mí</a><a href="#contacto">Contacto</a></nav>
  <button class="theme-toggle" id="themeBtn" aria-label="Cambiar modo claro u oscuro"><span class="tt-sun"></span><span class="tt-moon"></span></button>
 </header>
 
@@ -43,7 +43,7 @@
    <div class="rule"><span></span>✧<span></span></div>
    <p class="tagline" id="tagline">Tu espacio de uñas</p>
    <p class="hero-text" id="heroText">Diseños de uñas hechos a mano, a tu medida.</p>
-   <div class="hero-btns"><a class="btn" href="#disenos">Ver diseños</a><a class="btn ghost" href="#contacto">Escríbeme</a></div>
+   <div class="hero-btns"><a class="btn" href="#disenos">Ver diseños</a><a class="btn ghost" href="#propio">Diseño a tu estilo</a></div>
   </div>
  </section>
 
@@ -51,6 +51,19 @@
   <header class="sec-head"><h2 class="script">Mis diseños</h2><div class="rule sm"><span></span>✧<span></span></div><p class="muted">Elige el que te enamore y pídelo en un minuto. Todos se adaptan a tus medidas.</p></header>
   <div class="chips" id="cats" role="tablist" aria-label="Filtrar por categoría"></div>
   <div class="grid" id="grid"><p class="muted center loading">Cargando diseños…</p></div>
+ </section>
+
+ <section class="section" id="propio">
+  <div class="cta-card">
+   <img class="cta-stamp" src="assets/stamps/mariposa.webp" alt="" aria-hidden="true" style="--r:-7deg">
+   <div class="cta-text"><p class="tagline">Diseño propio</p><h2 class="script">A tu estilo</h2><p>¿Tienes una idea, una foto que te encanta o un evento especial? Cuéntamelo y creo un diseño solo para ti, con tus colores y tus medidas.</p></div>
+   <button class="btn" type="button" id="customBtn">Quiero mi diseño</button>
+  </div>
+ </section>
+
+ <section class="section" id="album" hidden>
+  <header class="sec-head"><h2 class="script">Mi álbum</h2><div class="rule sm"><span></span>✧<span></span></div><p class="muted">Algunos de mis trabajos. ¿Te gusta alguno? Pídeme uno parecido y lo adapto a ti.</p></header>
+  <div class="album" id="albumGrid"></div>
  </section>
 
  <section class="section about" id="sobre">
@@ -95,7 +108,7 @@
 <div id="modal-root"></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
-<script src="catalogo.js?v=3"></script>
+<script src="catalogo.js?v=4"></script>
 <script>if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(()=>{}))</script>
 </body>
 </html>
