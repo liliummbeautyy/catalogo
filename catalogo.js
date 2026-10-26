@@ -36,7 +36,7 @@ async function load(){
   const {data:p,error:e1}=await sb.from('catalog_profile').select('*').eq('slug',CFG.slug).maybeSingle();
   if(e1)throw e1;if(!p)throw new Error('Catálogo no encontrado');S.profile=p;
   const {data:d,error:e2}=await sb.from('catalog_designs').select('*').eq('owner',p.owner).eq('visible',true).order('sort',{ascending:true}).order('created_at',{ascending:false});
-  if(e2)throw e2;S.designs=(d||[]).filter(x=>!x.album);S.album=(d||[]).filter(x=>x.album&&x.photos?.length);
+  if(e2)throw e2;(d||[]).forEach(x=>{if(!x.album&&!x.name)x.name=x.category||'Diseño hecho a mano'});S.designs=(d||[]).filter(x=>!x.album);S.album=(d||[]).filter(x=>x.album&&x.photos?.length);
   paintProfile();paintCats();paintGrid();paintAlbum();paintCustom();paintContact();
  }catch(e){console.error(e);$('#grid').innerHTML='<p class="muted center">No se ha podido cargar el catálogo ahora mismo. Prueba de nuevo en un momento.</p>'}
 }
@@ -229,10 +229,10 @@ function openCustom(ref=null){
   <div class="field"><label for="p_name">Tu nombre</label><input id="p_name" maxlength="80" autocomplete="name" required></div>
   <div class="field"><span class="label">¿Cómo prefieres que te contacte?</span><div class="seg" data-name="p_pref"></div></div>
   <div class="contact-fields" data-for="p_pref"></div>
-  <div class="field"><label for="p_idea">${ref?'¿Qué cambiarías o qué te gustaría?':'Cuéntame tu idea'}</label><textarea id="p_idea" rows="4" maxlength="1000" ${ref?'':'required'} placeholder="${ref?'Igual pero en rojo, más corto, con menos piedras…':'Colores, dibujos, para qué ocasión, cuándo lo necesitas…'}"></textarea></div>
+  <div class="field"><label for="p_idea">${ref?'¿Qué cambiarías o qué te gustaría?':'Cuéntame tu idea'} <small id="p_ideaHint">${ref?'(opcional)':''}</small></label><textarea id="p_idea" rows="4" maxlength="1000" placeholder="${ref?'Igual pero en rojo, más corto, con menos piedras…':'Colores, dibujos, para qué ocasión, cuándo lo necesitas…'}"></textarea></div>
   <div class="field"><span class="label">Estilo <small>(elige los que quieras)</small></span><div class="seg multi" id="p_styles">${STYLES.map(x=>`<label><input type="checkbox" value="${esc(x)}">${esc(x)}</label>`).join('')}</div></div>
   <div class="field"><label for="p_colors">Colores <small>(opcional)</small></label><input id="p_colors" maxlength="80" placeholder="Rosa empolvado y dorado"></div>
-  <div class="field"><span class="label">Fotos de referencia <small>(opcional, hasta 3)</small></span><div class="refs" id="p_refs"></div></div>
+  <div class="field"><span class="label">Fotos de referencia <small id="p_refHint">${ref?'(opcional, ya va la del álbum)':'(al menos 1, hasta 3)'}</small></span><div class="refs" id="p_refs"></div></div>
   <div class="grid-2"><div class="field"><label for="p_shape">Forma</label><input id="p_shape" list="pShapes" maxlength="40" value="${esc(ref?.item?.shape||'')}" placeholder="La que me recomiendes"><datalist id="pShapes">${['Almond','Coffin','Cuadrada','Redonda','Stiletto'].map(x=>`<option value="${x}">`).join('')}</datalist></div><div class="field"><label for="p_len">Largo</label><input id="p_len" list="pLens" maxlength="20" value="${esc(ref?.item?.length||'')}" placeholder="Corto, medio, largo"><datalist id="pLens">${['Corto','Medio','Largo','Extra largo'].map(x=>`<option value="${x}">`).join('')}</datalist></div></div>
   <div class="field"><span class="label">Tus medidas</span><div class="seg sizes-seg">${[['measure','Me ayudas a medirme'],['know','Sé mis tallas']].map(([k,l],i)=>`<label class="${i?'':'on'}"><input type="radio" name="p_size" value="${k}" ${i?'':'checked'}>${l}</label>`).join('')}</div></div>
   <div class="sizes" hidden>${['Izquierda','Derecha'].map(h=>`<div class="hand"><span>${h}</span>${(h==='Izquierda'?[...FINGERS].reverse():FINGERS).map(f=>`<label><small>${f}</small><input inputmode="numeric" maxlength="2" data-h="${h[0]}" aria-label="Talla ${f} mano ${h.toLowerCase()}"></label>`).join('')}</div>`).join('')}</div>
@@ -243,14 +243,18 @@ function openCustom(ref=null){
  </form>`,'order');
  const form=$('#customForm');wireSeg(form,'p_pref','p');
  form.querySelector('.sizes-seg').addEventListener('change',e=>{form.querySelectorAll('.sizes-seg label').forEach(l=>l.classList.toggle('on',l.querySelector('input').checked));form.querySelector('.sizes').hidden=e.target.value!=='know'});
- form.querySelector('#p_styles').addEventListener('change',e=>{const l=e.target.closest('label');if(l)l.classList.toggle('on',e.target.checked)});
+ const surprise=()=>!!form.querySelector('#p_styles input[value="Sorpréndeme"]:checked');
+ form.querySelector('#p_styles').addEventListener('change',e=>{const l=e.target.closest('label');if(l)l.classList.toggle('on',e.target.checked);
+  if(!ref){const sp=surprise();$('#p_refHint').textContent=sp?'(opcional: me dejas sorprenderte)':'(al menos 1, hasta 3)';$('#p_ideaHint').textContent=sp?'(opcional)':''}});
  const drawRefs=()=>{$('#p_refs').innerHTML=refs.map((r,k)=>`<figure><img src="${r.url}" alt="Referencia ${k+1}"><button type="button" class="rm" data-rm="${k}" aria-label="Quitar foto">${ic('close')}</button></figure>`).join('')+(refs.length<3?`<label class="ref-add">${ic('heart')}<span>Añadir foto</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden></label>`:'')};
  $('#p_refs').addEventListener('click',e=>{const b=e.target.closest('[data-rm]');if(!b)return;const [r]=refs.splice(+b.dataset.rm,1);URL.revokeObjectURL(r.url);drawRefs()});
  $('#p_refs').addEventListener('change',async e=>{const files=[...(e.target.files||[])].filter(f=>/^image\//.test(f.type)).slice(0,3-refs.length);for(const f of files){try{const b=await compress(f);refs.push({blob:b,url:URL.createObjectURL(b)})}catch{toast('No se pudo leer esa foto')}}drawRefs()});
  drawRefs();
  form.addEventListener('submit',async e=>{e.preventDefault();if(form.querySelector('.hp')?.value)return;
   const msg=form.querySelector('.form-msg');const err=validate(form);if(err){msg.textContent=err;msg.className='form-msg err';return}
-  const idea=$('#p_idea').value.trim();if(!ref&&!idea){msg.textContent='Cuéntame un poco tu idea';msg.className='form-msg err';return}
+  const idea=$('#p_idea').value.trim();
+  if(!ref&&!surprise()&&!refs.length){msg.textContent='Añade al menos una foto de referencia, o elige el estilo «Sorpréndeme» y te sorprendo yo 💕';msg.className='form-msg err';$('#p_refs').scrollIntoView({block:'center',behavior:'smooth'});return}
+  if(!ref&&!surprise()&&!idea){msg.textContent='Cuéntame un poco tu idea';msg.className='form-msg err';$('#p_idea').focus();return}
   const btn=form.querySelector('button[type=submit]');btn.disabled=true;btn.textContent=refs.length?'Subiendo fotos…':'Enviando…';
   const paths=[];
   for(const r of refs){const path=`${S.profile.owner}/${(crypto.randomUUID?crypto.randomUUID():Date.now()+''+Math.random()).replace(/[^a-z0-9-]/gi,'')}.jpg`;const {error}=await sb.storage.from('catalog-refs').upload(path,r.blob,{contentType:'image/jpeg',upsert:false});if(error){btn.disabled=false;btn.textContent='Enviar mi idea';msg.className='form-msg err';msg.textContent='No se han podido subir las fotos. Prueba sin ellas o con otras.';return}paths.push(path)}
