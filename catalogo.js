@@ -138,11 +138,11 @@ function openLegal(kind){
   <ul><li><b>Titular:</b> ${esc(l.name||'—')}</li><li><b>NIF:</b> ${esc(l.nif||'—')}</li><li><b>Nombre comercial:</b> ${esc(l.biz)}</li>${l.addr?`<li><b>Domicilio:</b> ${esc(l.addr)}</li>`:''}<li><b>Contacto:</b> ${contactLine()}</li></ul>
   <h3>Uso de la web</h3><p>Esta web muestra los diseños de uñas de ${esc(l.biz)} y permite contactar para pedir información o un diseño. Esta web no vende: enviar un mensaje no supone ninguna compra ni compromiso; los detalles se acuerdan después por mensaje.</p>
   <h3>Propiedad intelectual</h3><p>Las fotos, diseños y textos son de ${esc(l.biz)}. No se pueden copiar ni usar sin permiso.</p>
-  <h3>Responsabilidad</h3><p>Los precios orientativos pueden cambiar según medidas y detalles. Se intenta que la información sea exacta, pero puede contener errores que se corregirán en cuanto se detecten.</p>
+  <h3>Responsabilidad</h3><p>Se intenta que la información sea exacta, pero puede contener errores que se corregirán en cuanto se detecten.</p>
   <h3>Legislación</h3><p>Se aplica la legislación española. Si eres consumidora, tienes los derechos que te reconoce la normativa de consumo.</p>`,
  privacidad:`<h2>Política de privacidad</h2>${pend}<p>Conforme al Reglamento (UE) 2016/679 (RGPD) y la Ley Orgánica 3/2018 (LOPDGDD):</p>
   <h3>Responsable</h3><p>${who()}${l.name?' · '+esc(l.biz):''}${l.addr?' · '+esc(l.addr):''}. Contacto: ${contactLine()}.</p>
-  <h3>Qué datos se tratan</h3><p>Los que escribes en los formularios: nombre, teléfono, Instagram o email, tu preferencia de contacto, tus medidas y forma de uñas (si las das) y tu mensaje. No pidas ni envíes datos de salud por aquí; si tienes alguna alergia, coméntalo directamente por mensaje.</p>
+  <h3>Qué datos se tratan</h3><p>Los que escribes en los formularios: nombre, teléfono, Instagram o email, tu preferencia de contacto, la forma y el largo de uñas que prefieras, las fotos de referencia que subas y tu mensaje. No pidas ni envíes datos de salud por aquí; si tienes alguna alergia, coméntalo directamente por mensaje.</p>
   <h3>Para qué</h3><p>Responder a tus mensajes y contactarte sobre el diseño que te interesa. No se usan para publicidad ni se toman decisiones automatizadas.</p>
   <h3>Base legal</h3><p>Tu consentimiento (art. 6.1.a RGPD) al marcar la casilla, y la aplicación de medidas precontractuales a petición tuya (art. 6.1.b) si decides encargar un diseño. Puedes retirar tu consentimiento cuando quieras.</p>
   <h3>Cuánto tiempo</h3><p>Los mensajes se borran automáticamente un año después de cerrarse y, en todo caso, a los dos años. Si pasas a ser clienta, se conservan mientras lo seas y hasta 2 años después de tu último servicio, salvo obligación legal (por ejemplo, fiscal).</p>
@@ -186,16 +186,15 @@ function openCustom(ref=null){
   <div class="field"><label for="p_colors">Colores <small>(opcional)</small></label><input id="p_colors" maxlength="80" placeholder="Rosa empolvado y dorado"></div>
   <div class="field"><span class="label">Fotos de referencia <small id="p_refHint">${ref?'(opcional, ya va la de este diseño)':'(al menos 1, hasta 3)'}</small></span><div class="refs" id="p_refs"></div></div>
   <div class="grid-2"><div class="field"><label for="p_shape">Forma</label><input id="p_shape" list="pShapes" maxlength="40" value="${esc(ref?.item?.shape||'')}" placeholder="La que me recomiendes"><datalist id="pShapes">${['Almond','Coffin','Cuadrada','Redonda','Stiletto'].map(x=>`<option value="${x}">`).join('')}</datalist></div><div class="field"><label for="p_len">Largo</label><input id="p_len" list="pLens" maxlength="20" value="${esc(ref?.item?.length||'')}" placeholder="Corto, medio, largo"><datalist id="pLens">${['Corto','Medio','Largo','Extra largo'].map(x=>`<option value="${x}">`).join('')}</datalist></div></div>
-  <div class="field"><span class="label">Tus medidas</span><div class="seg sizes-seg">${[['measure','Me ayudas a medirme'],['know','Sé mis tallas']].map(([k,l],i)=>`<label class="${i?'':'on'}"><input type="radio" name="p_size" value="${k}" ${i?'':'checked'}>${l}</label>`).join('')}</div></div>
-  <div class="sizes" hidden>${['Izquierda','Derecha'].map(h=>`<div class="hand"><span>${h}</span>${(h==='Izquierda'?[...FINGERS].reverse():FINGERS).map(f=>`<label><small>${f}</small><input inputmode="numeric" maxlength="2" data-h="${h[0]}" aria-label="Talla ${f} mano ${h.toLowerCase()}"></label>`).join('')}</div>`).join('')}</div>
+  <div class="field"><span class="label">Tus medidas</span><div class="seg multi"><label><input type="checkbox" id="p_help">Ayúdame a medirme</label></div></div>
   <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
   ${consentHtml(ref?'contactarte sobre este diseño':'preparar tu diseño personalizado y contactarte sobre él')}
   <button class="btn wide" type="submit">Enviar mi idea</button>
   <p class="form-msg" role="status"></p>
  </form>`,'order');
  const form=$('#customForm');wireSeg(form,'p_pref','p');
- form.querySelector('.sizes-seg').addEventListener('change',e=>{form.querySelectorAll('.sizes-seg label').forEach(l=>l.classList.toggle('on',l.querySelector('input').checked));form.querySelector('.sizes').hidden=e.target.value!=='know'});
  const surprise=()=>!!form.querySelector('#p_styles input[value="Sorpréndeme"]:checked');
+ $('#p_help').addEventListener('change',e=>e.target.closest('label').classList.toggle('on',e.target.checked));
  form.querySelector('#p_styles').addEventListener('change',e=>{const l=e.target.closest('label');if(l)l.classList.toggle('on',e.target.checked);
   if(!ref){const sp=surprise();$('#p_refHint').textContent=sp?'(opcional: me dejas sorprenderte)':'(al menos 1, hasta 3)';$('#p_ideaHint').textContent=sp?'(opcional)':''}});
  const drawRefs=()=>{$('#p_refs').innerHTML=refs.map((r,k)=>`<figure><img src="${r.url}" alt="Referencia ${k+1}"><button type="button" class="rm" data-rm="${k}" aria-label="Quitar foto">${ic('close')}</button></figure>`).join('')+(refs.length<3?`<label class="ref-add">${ic('heart')}<span>Añadir foto</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden></label>`:'')};
@@ -211,13 +210,11 @@ function openCustom(ref=null){
   const paths=[];
   for(const r of refs){const path=`${S.profile.owner}/${(crypto.randomUUID?crypto.randomUUID():Date.now()+''+Math.random()).replace(/[^a-z0-9-]/gi,'')}.jpg`;const {error}=await sb.storage.from('catalog-refs').upload(path,r.blob,{contentType:'image/jpeg',upsert:false});if(error){btn.disabled=false;btn.textContent='Enviar mi idea';msg.className='form-msg err';msg.textContent='No se han podido subir las fotos. Prueba sin ellas o con otras.';return}paths.push(path)}
   btn.disabled=false;btn.textContent='Enviar mi idea';
-  const know=form.querySelector('input[name="p_size"]:checked').value==='know';
-  const sz=h=>[...form.querySelectorAll(`.sizes input[data-h="${h}"]`)].map(i=>i.value.trim()||'-').join(' ');
   const styles=[...form.querySelectorAll('#p_styles input:checked')].map(i=>i.value);const colors=$('#p_colors').value.trim();
   const c=readContact(form,'p_pref','p');
   send({kind:'propio',design_id:ref?.item?.id||null,design_name:ref?(ref.item.name||'Diseño del catálogo').slice(0,80):'Diseño propio',price:null,name:$('#p_name').value.trim().slice(0,80),...c,
    style:[styles.join(', '),colors&&'Colores: '+colors].filter(Boolean).join(' · ').slice(0,300),refs:ref&&ref.photo?['catalog:'+ref.photo,...paths].slice(0,3):paths,
-   sizes:know?`Izq: ${sz('I')} · Der: ${sz('D')}`:'Necesita que la midan',shape:$('#p_shape').value.trim().slice(0,40),length:$('#p_len').value.trim().slice(0,20),message:idea.slice(0,1000)},
+   sizes:$('#p_help').checked?'Quiere que la ayudes a medirse':'',shape:$('#p_shape').value.trim().slice(0,40),length:$('#p_len').value.trim().slice(0,20),message:idea.slice(0,1000)},
    form,btn,()=>{refs.forEach(r=>URL.revokeObjectURL(r.url));$('.modal-card').innerHTML=`<button class="close" aria-label="Cerrar" onclick="closeModal()">${ic('close')}</button>`+thanksHtml(ref?'¡Recibido!':'¡Idea recibida!','Me encanta que te guste. Te escribo muy pronto para hablarlo.')});
  });
  setTimeout(()=>$('#p_name')?.focus(),60);
