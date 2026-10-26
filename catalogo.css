@@ -268,3 +268,9 @@ html,body{overflow-x:clip}
  .album{columns:2;column-gap:10px}.atile{margin-bottom:10px;border-radius:12px}.atile-cta{opacity:1;transform:none;font-size:12.5px;padding:4px 10px;left:6px;bottom:6px}
  .lb-info .btn{width:100%}
 }
+
+/* ---- Catálogo de inspiración (sin precios) ---- */
+.drow .btn{width:100%}
+.btn .ic{width:17px;height:17px}
+.vinfo .btn.ghost{margin-top:8px}
+.dinfo .meta:last-child{margin-bottom:0}

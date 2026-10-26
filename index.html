@@ -28,7 +28,7 @@
 <body>
 <header class="topnav">
  <a class="tn-logo" href="#inicio" aria-label="Lilium Beauty, inicio"><img class="only-light" src="assets/logo.webp" alt="Lilium Beauty"><img class="only-dark" src="assets/logo-dark.webp" alt=""></a>
- <nav class="tn-links"><a href="#disenos">Diseños</a><a href="#album" id="navAlbum" hidden>Álbum</a><a href="#propio">A tu estilo</a><a href="#sobre">Sobre mí</a><a href="#contacto">Contacto</a></nav>
+ <nav class="tn-links"><a href="#disenos">Diseños</a><a href="#propio">A tu estilo</a><a href="#sobre">Sobre mí</a><a href="#contacto">Contacto</a></nav>
  <button class="theme-toggle" id="themeBtn" aria-label="Cambiar modo claro u oscuro"><span class="tt-sun"></span><span class="tt-moon"></span></button>
 </header>
 
@@ -48,7 +48,7 @@
  </section>
 
  <section class="section" id="disenos">
-  <header class="sec-head"><h2 class="script">Mis diseños</h2><div class="rule sm"><span></span>✧<span></span></div><p class="muted">Elige el que te enamore y pídelo en un minuto. Todos se adaptan a tus medidas.</p></header>
+  <header class="sec-head"><h2 class="script">Mis diseños</h2><div class="rule sm"><span></span>✧<span></span></div><p class="muted">Inspírate. Si alguno te enamora, pulsa «Me interesa» y lo hablamos: lo adapto a tus medidas y a tu gusto.</p></header>
   <div class="chips" id="cats" role="tablist" aria-label="Filtrar por categoría"></div>
   <div class="grid" id="grid"><p class="muted center loading">Cargando diseños…</p></div>
  </section>
@@ -59,11 +59,6 @@
    <div class="cta-text"><p class="tagline">Diseño propio</p><h2 class="script">A tu estilo</h2><p>¿Tienes una idea, una foto que te encanta o un evento especial? Cuéntamelo y creo un diseño solo para ti, con tus colores y tus medidas.</p></div>
    <button class="btn" type="button" id="customBtn">Quiero mi diseño</button>
   </div>
- </section>
-
- <section class="section" id="album" hidden>
-  <header class="sec-head"><h2 class="script">Mi álbum</h2><div class="rule sm"><span></span>✧<span></span></div><p class="muted">Algunos de mis trabajos. ¿Te gusta alguno? Pídeme uno parecido y lo adapto a ti.</p></header>
-  <div class="album" id="albumGrid"></div>
  </section>
 
  <section class="section about" id="sobre">
@@ -108,7 +103,7 @@
 <div id="modal-root"></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
-<script src="catalogo.js?v=6"></script>
+<script src="catalogo.js?v=7"></script>
 <script>if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(()=>{}))</script>
 </body>
 </html>

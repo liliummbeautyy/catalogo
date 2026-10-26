@@ -9,7 +9,6 @@ const STAMPS=['flores','botanical','love','nippon','mariposa','ciruelo','rosa','
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const money=n=>{const v=Number(n);return (Number.isInteger(v)?v.toLocaleString('es-ES'):v.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2}))+' €'};
-const priceText=d=>d.price==null?'Consultar':(d.price_from?'Desde ':'')+money(d.price);
 const photo=p=>!p?'':/^https?:/.test(p)?p:sb.storage.from(CFG.bucket).getPublicUrl(p).data.publicUrl;
 const icon=n=>({
  whatsapp:'<path d="M4 20l1.3-4A8 8 0 1 1 8 18.7z"/><path d="M9 9.2c0 3 2.6 5.6 5.6 5.6l1-1.4-1.8-1-.9.8c-1-.4-1.9-1.3-2.3-2.3l.8-.9-1-1.8z"/>',
@@ -36,8 +35,8 @@ async function load(){
   const {data:p,error:e1}=await sb.from('catalog_profile').select('*').eq('slug',CFG.slug).maybeSingle();
   if(e1)throw e1;if(!p)throw new Error('Catálogo no encontrado');S.profile=p;
   const {data:d,error:e2}=await sb.from('catalog_designs').select('*').eq('owner',p.owner).eq('visible',true).order('sort',{ascending:true}).order('created_at',{ascending:false});
-  if(e2)throw e2;(d||[]).forEach(x=>{if(!x.album&&!x.name)x.name=x.category||'Diseño hecho a mano'});S.designs=(d||[]).filter(x=>!x.album);S.album=(d||[]).filter(x=>x.album&&x.photos?.length);
-  paintProfile();paintCats();paintGrid();paintAlbum();paintCustom();paintContact();
+  if(e2)throw e2;S.designs=(d||[]).filter(x=>x.photos?.length||x.name);
+  paintProfile();paintCats();paintGrid();paintCustom();paintContact();
  }catch(e){console.error(e);$('#grid').innerHTML='<p class="muted center">No se ha podido cargar el catálogo ahora mismo. Prueba de nuevo en un momento.</p>'}
 }
 function paintProfile(){
@@ -54,15 +53,15 @@ function paintCats(){
 }
 function paintGrid(){
  const list=S.designs.filter(d=>S.cat==='Todos'||d.category===S.cat);
- if(!S.designs.length){$('#grid').innerHTML=S.album.length?`<div class="soon"><img src="assets/stamps/lirios.webp" alt="" style="--r:-5deg"><p class="script">Muy pronto…</p><p class="muted">Estoy preparando diseños a la venta. Mientras, mira mi álbum o pide uno a tu estilo.</p><div class="hero-btns"><a class="btn" href="#album">Ver mi álbum</a><a class="btn ghost" href="#propio">Diseño a tu estilo</a></div></div>`:`<div class="soon"><img src="assets/stamps/lirios.webp" alt="" style="--r:-5deg"><p class="script">Muy pronto…</p><p class="muted">Estoy preparando mis primeros diseños. Mientras, pídeme uno a tu estilo o escríbeme y te enseño ideas.</p><a class="btn" href="#propio">Diseño a tu estilo</a></div>`;return}
- $('#grid').innerHTML=list.map((d,i)=>`<article class="dcard">
+ if(!S.designs.length){$('#grid').innerHTML=`<div class="soon"><img src="assets/stamps/lirios.webp" alt="" style="--r:-5deg"><p class="script">Muy pronto…</p><p class="muted">Estoy preparando mis primeros diseños. Mientras, pídeme uno a tu estilo o escríbeme y te enseño ideas.</p><a class="btn" href="#propio">Diseño a tu estilo</a></div>`;return}
+ $('#grid').innerHTML=list.map((d,i)=>{const meta=[d.category,d.shape,d.length].filter(Boolean).join(' · ');return `<article class="dcard">
   ${i%4===0?`<img class="sticker" src="assets/stamps/${STAMPS[(i/4)%STAMPS.length]}.webp" alt="" aria-hidden="true" style="--r:${i%8?7:-7}deg">`:''}
-  <button class="dphoto" data-view="${d.id}" aria-label="Ver ${esc(d.name)}">${d.photos?.[0]?`<img src="${esc(photo(d.photos[0]))}" alt="${esc(d.name)}" loading="lazy">`:`<span class="nophoto">${ic('heart')}</span>`}${d.photos?.length>1?`<em>${d.photos.length} fotos</em>`:''}</button>
-  <div class="dinfo"><h3>${esc(d.name)}</h3><p class="meta">${esc([d.category,d.shape,d.length].filter(Boolean).join(' · '))}</p>
-  <div class="drow"><span class="price">${priceText(d)}</span>${S.profile.open?`<button class="btn small" data-order="${d.id}">Lo quiero</button>`:''}</div></div>
- </article>`).join('');
+  <button class="dphoto" data-view="${d.id}" aria-label="Ver ${esc(d.name||'diseño')}">${d.photos?.[0]?`<img src="${esc(photo(d.photos[0]))}" alt="${esc(d.name||'Diseño de uñas')}" loading="lazy">`:`<span class="nophoto">${ic('heart')}</span>`}${d.photos?.length>1?`<em>${d.photos.length} fotos</em>`:''}</button>
+  ${d.name||meta||S.profile.open?`<div class="dinfo">${d.name?`<h3>${esc(d.name)}</h3>`:''}${meta?`<p class="meta">${esc(meta)}</p>`:''}${S.profile.open?`<div class="drow"><button class="btn small ghost" data-want="${d.id}">${ic('heart')}Me interesa</button></div>`:''}</div>`:''}
+ </article>`}).join('');
 }
-$('#grid').addEventListener('click',e=>{const v=e.target.closest('[data-view]'),o=e.target.closest('[data-order]');if(v)openDesign(v.dataset.view);if(o)openOrder(o.dataset.order)});
+$('#grid').addEventListener('click',e=>{const v=e.target.closest('[data-view]'),w=e.target.closest('[data-want]');if(v)openDesign(v.dataset.view);if(w)wantDesign(w.dataset.want)});
+function wantDesign(id){const d=S.designs.find(x=>x.id===id);if(d)openCustom({item:d,photo:d.photos?.[0]||''})}
 
 /* Ventanas */
 function openModal(html,cls=''){$('#modal-root').innerHTML=`<div class="modal" role="dialog" aria-modal="true"><div class="modal-card ${cls}"><button class="close" aria-label="Cerrar">${ic('close')}</button>${html}</div></div>`;const m=$('#modal-root .modal');m.addEventListener('mousedown',e=>{if(e.target===m)closeModal()});m.querySelector('.close').onclick=closeModal;document.body.classList.add('noscroll')}
@@ -72,11 +71,12 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
 function openDesign(id){
  const d=S.designs.find(x=>x.id===id);if(!d)return;let i=0;const ph=d.photos||[];
  openModal(`<div class="view"><div class="gallery">${ph.length?`<img id="vImg" src="${esc(photo(ph[0]))}" alt="${esc(d.name)}">`:`<span class="nophoto big">${ic('heart')}</span>`}${ph.length>1?`<button class="gnav prev" aria-label="Foto anterior">${ic('left')}</button><button class="gnav next" aria-label="Foto siguiente">${ic('right')}</button><div class="dots">${ph.map((_,k)=>`<i class="${k?'':'on'}"></i>`).join('')}</div>`:''}</div>
- <div class="vinfo"><h2>${esc(d.name)}</h2><p class="meta">${esc([d.category,d.shape,d.length].filter(Boolean).join(' · '))}</p><p class="price big">${priceText(d)}</p>${d.description?`<p class="desc">${esc(d.description)}</p>`:''}${d.tags?.length?`<div class="tags">${d.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div>`:''}
- ${S.profile.open?`<button class="btn wide" id="vOrder">Lo quiero</button>`:''}<p class="muted small">Se adapta a tus medidas. Te escribo para confirmar todos los detalles.</p></div></div>`,'wide');
+ <div class="vinfo">${d.name?`<h2>${esc(d.name)}</h2>`:''}<p class="meta">${esc([d.category,d.shape,d.length].filter(Boolean).join(' · '))}</p>${d.description?`<p class="desc">${esc(d.description)}</p>`:''}${d.tags?.length?`<div class="tags">${d.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div>`:''}
+ ${S.profile.open?`<button class="btn wide" id="vOrder">${ic('heart')}Me interesa</button>`:''}${waLink(S.profile.whatsapp,'')?`<a class="btn ghost wide" id="vWa" target="_blank" rel="noopener">${ic('whatsapp')}Escríbeme por WhatsApp</a>`:''}<p class="muted small">Lo adapto a tus medidas y a tu gusto. Escríbeme y lo hablamos.</p></div></div>`,'wide');
  const show=k=>{i=(k+ph.length)%ph.length;$('#vImg').src=photo(ph[i]);document.querySelectorAll('.dots i').forEach((x,n)=>x.classList.toggle('on',n===i))};
  $('.gnav.prev')?.addEventListener('click',()=>show(i-1));$('.gnav.next')?.addEventListener('click',()=>show(i+1));
- $('#vOrder')?.addEventListener('click',()=>openOrder(id));
+ $('#vOrder')?.addEventListener('click',()=>openCustom({item:d,photo:ph[i]||''}));
+ const wa=$('#vWa');if(wa)wa.href=waLink(S.profile.whatsapp,`Hola 🌸 He visto ${d.name?'el diseño «'+d.name+'»':'un diseño'} en tu catálogo y me interesa. ${photo(ph[i]||ph[0]||'')}`.trim());
 }
 
 /* Formularios */
@@ -107,34 +107,6 @@ async function send(row,form,btn,doneHtml){
 }
 function thanksHtml(title,extra=''){const wa=waLink(S.profile.whatsapp,'Hola 🌸 Te acabo de escribir desde tu catálogo');return `<div class="thanks"><img src="assets/stamps/love.webp" alt="" style="--r:-6deg"><h2 class="script">${title}</h2><p>${extra||'Te escribo muy pronto.'}</p>${wa?`<a class="btn ghost" href="${esc(wa)}" target="_blank" rel="noopener">${ic('whatsapp')}O escríbeme ya por WhatsApp</a>`:''}</div>`}
 
-function openOrder(id){
- const d=S.designs.find(x=>x.id===id);if(!d)return;
- openModal(`<div class="order-head">${d.photos?.[0]?`<img src="${esc(photo(d.photos[0]))}" alt="">`:''}<div><small class="muted">Tu pedido</small><h2>${esc(d.name)}</h2><p class="price">${priceText(d)}</p></div></div>
- <form class="form" id="orderForm" novalidate>
-  <div class="field"><label for="o_name">Tu nombre</label><input id="o_name" maxlength="80" autocomplete="name" required></div>
-  <div class="field"><span class="label">¿Cómo prefieres que te contacte?</span><div class="seg" data-name="o_pref"></div></div>
-  <div class="contact-fields" data-for="o_pref"></div>
-  <div class="field"><span class="label">Tus medidas</span><div class="seg sizes-seg">${[['measure','Me ayudas a medirme'],['know','Sé mis tallas']].map(([k,l],i)=>`<label class="${i?'':'on'}"><input type="radio" name="o_size" value="${k}" ${i?'':'checked'}>${l}</label>`).join('')}</div></div>
-  <div class="sizes" hidden>${['Izquierda','Derecha'].map(h=>`<div class="hand"><span>${h}</span>${(h==='Izquierda'?[...FINGERS].reverse():FINGERS).map(f=>`<label><small>${f}</small><input inputmode="numeric" maxlength="2" data-h="${h[0]}" aria-label="Talla ${f} mano ${h.toLowerCase()}"></label>`).join('')}</div>`).join('')}</div>
-  <div class="grid-2"><div class="field"><label for="o_shape">Forma</label><input id="o_shape" list="oShapes" maxlength="40" value="${esc(d.shape||'')}"><datalist id="oShapes">${['Almond','Coffin','Cuadrada','Redonda','Stiletto'].map(x=>`<option value="${x}">`).join('')}</datalist></div><div class="field"><label for="o_len">Largo</label><input id="o_len" maxlength="20" value="${esc(d.length||'')}"></div></div>
-  <div class="field"><label for="o_msg">¿Algo más? <small>(opcional)</small></label><textarea id="o_msg" rows="3" maxlength="1000" placeholder="Colores, fecha que lo necesitas, si es para un evento…"></textarea></div>
-  <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-  ${consentHtml('gestionar tu pedido y contactarte sobre él')}
-  <button class="btn wide" type="submit">Enviar pedido</button>
-  <p class="form-msg" role="status"></p>
-  <p class="muted small center">No pagas nada ahora: primero te escribo para confirmarlo todo.</p>
- </form>`,'order');
- const form=$('#orderForm');wireSeg(form,'o_pref','o');
- form.querySelector('.sizes-seg').addEventListener('change',e=>{form.querySelectorAll('.sizes-seg label').forEach(l=>l.classList.toggle('on',l.querySelector('input').checked));form.querySelector('.sizes').hidden=e.target.value!=='know'});
- form.addEventListener('submit',e=>{e.preventDefault();
-  const know=form.querySelector('input[name="o_size"]:checked').value==='know';
-  const sz=h=>[...form.querySelectorAll(`.sizes input[data-h="${h}"]`)].map(i=>i.value.trim()||'-').join(' ');
-  const c=readContact(form,'o_pref','o');
-  send({kind:'pedido',design_id:d.id,design_name:d.name.slice(0,80),price:d.price,name:$('#o_name').value.trim().slice(0,80),...c,sizes:know?`Izq: ${sz('I')} · Der: ${sz('D')}`:'Necesita que la midan',shape:$('#o_shape').value.trim().slice(0,40),length:$('#o_len').value.trim().slice(0,20),message:$('#o_msg').value.trim().slice(0,1000)},form,form.querySelector('button[type=submit]'),()=>{$('.modal-card').innerHTML=`<button class="close" aria-label="Cerrar" onclick="closeModal()">${ic('close')}</button>`+thanksHtml('¡Pedido enviado!',`He recibido tu pedido de <b>${esc(d.name)}</b>. Te escribo muy pronto para confirmar medidas y detalles.`)});
- });
- setTimeout(()=>$('#o_name')?.focus(),60);
-}
-
 function paintContact(){
  const cc=$('#contactConsent');if(cc)cc.outerHTML=consentHtml('responder a tu mensaje');
  const p=S.profile;const links=[];
@@ -145,7 +117,7 @@ function paintContact(){
  if(p.city)links.push(`<div class="clink">${ic('pin')}<span><b>Dónde estoy</b><small>${esc(p.city)}</small></span></div>`);
  const box=$('#contactLinks');box.closest('.contact-grid').classList.toggle('solo',!links.length);box.hidden=!links.length;box.innerHTML=`<img class="cl-stamp" src="assets/stamps/avion.webp" alt="" aria-hidden="true" style="--r:6deg">`+links.join('');
  const form=$('#contactForm');
- if(!p.open){form.innerHTML='<h3>Ahora mismo no acepto pedidos nuevos</h3><p class="muted">Puedes seguir viendo mis diseños. Vuelve pronto 🌸</p>';return}
+ if(!p.open){form.innerHTML='<h3>Ahora mismo no acepto encargos nuevos</h3><p class="muted">Puedes seguir viendo mis diseños. Vuelve pronto 🌸</p>';return}
  wireSeg(form,'c_pref','c');
  form.addEventListener('submit',e=>{e.preventDefault();const c=readContact(form,'c_pref','c');send({kind:'contacto',name:$('#c_name').value.trim().slice(0,80),...c,message:$('#c_msg').value.trim().slice(0,1000)},form,form.querySelector('button[type=submit]'),()=>{form.innerHTML=thanksHtml('¡Mensaje enviado!')})});
 }
@@ -164,16 +136,16 @@ function openLegal(kind){
  const html={
  aviso:`<h2>Aviso legal</h2>${pend}<p>En cumplimiento de la Ley 34/2002, de servicios de la sociedad de la información (LSSI), se informa de los datos de la titular de esta web:</p>
   <ul><li><b>Titular:</b> ${esc(l.name||'—')}</li><li><b>NIF:</b> ${esc(l.nif||'—')}</li><li><b>Nombre comercial:</b> ${esc(l.biz)}</li>${l.addr?`<li><b>Domicilio:</b> ${esc(l.addr)}</li>`:''}<li><b>Contacto:</b> ${contactLine()}</li></ul>
-  <h3>Uso de la web</h3><p>Esta web muestra los diseños de uñas de ${esc(l.biz)} y permite solicitar información o hacer pedidos. Enviar un pedido no supone una compra: es una solicitud que se confirma después por mensaje, con precio, plazos y forma de pago.</p>
+  <h3>Uso de la web</h3><p>Esta web muestra los diseños de uñas de ${esc(l.biz)} y permite contactar para pedir información o un diseño. Esta web no vende: enviar un mensaje no supone ninguna compra ni compromiso; los detalles se acuerdan después por mensaje.</p>
   <h3>Propiedad intelectual</h3><p>Las fotos, diseños y textos son de ${esc(l.biz)}. No se pueden copiar ni usar sin permiso.</p>
   <h3>Responsabilidad</h3><p>Los precios orientativos pueden cambiar según medidas y detalles. Se intenta que la información sea exacta, pero puede contener errores que se corregirán en cuanto se detecten.</p>
   <h3>Legislación</h3><p>Se aplica la legislación española. Si eres consumidora, tienes los derechos que te reconoce la normativa de consumo.</p>`,
  privacidad:`<h2>Política de privacidad</h2>${pend}<p>Conforme al Reglamento (UE) 2016/679 (RGPD) y la Ley Orgánica 3/2018 (LOPDGDD):</p>
   <h3>Responsable</h3><p>${who()}${l.name?' · '+esc(l.biz):''}${l.addr?' · '+esc(l.addr):''}. Contacto: ${contactLine()}.</p>
   <h3>Qué datos se tratan</h3><p>Los que escribes en los formularios: nombre, teléfono, Instagram o email, tu preferencia de contacto, tus medidas y forma de uñas (si las das) y tu mensaje. No pidas ni envíes datos de salud por aquí; si tienes alguna alergia, coméntalo directamente por mensaje.</p>
-  <h3>Para qué</h3><p>Responder a tus mensajes, gestionar tus pedidos y contactarte sobre ellos. No se usan para publicidad ni se toman decisiones automatizadas.</p>
-  <h3>Base legal</h3><p>Tu consentimiento (art. 6.1.a RGPD) al marcar la casilla y, si haces un pedido, la gestión de esa relación precontractual (art. 6.1.b). Puedes retirar tu consentimiento cuando quieras.</p>
-  <h3>Cuánto tiempo</h3><p>Los mensajes y pedidos se borran automáticamente un año después de cerrarse y, en todo caso, a los dos años. Si pasas a ser clienta, se conservan mientras lo seas y hasta 2 años después de tu último servicio, salvo obligación legal (por ejemplo, fiscal).</p>
+  <h3>Para qué</h3><p>Responder a tus mensajes y contactarte sobre el diseño que te interesa. No se usan para publicidad ni se toman decisiones automatizadas.</p>
+  <h3>Base legal</h3><p>Tu consentimiento (art. 6.1.a RGPD) al marcar la casilla, y la aplicación de medidas precontractuales a petición tuya (art. 6.1.b) si decides encargar un diseño. Puedes retirar tu consentimiento cuando quieras.</p>
+  <h3>Cuánto tiempo</h3><p>Los mensajes se borran automáticamente un año después de cerrarse y, en todo caso, a los dos años. Si pasas a ser clienta, se conservan mientras lo seas y hasta 2 años después de tu último servicio, salvo obligación legal (por ejemplo, fiscal).</p>
   <h3>Quién los ve</h3><p>Solo la titular. No se ceden a terceros. Se alojan en Supabase (servidores en Irlanda, UE) como encargado del tratamiento, con contrato que garantiza su protección. La web se publica en GitHub Pages y usa Google Fonts y jsDelivr para tipografías y código. Estos servicios pueden recibir tu dirección IP y están acogidos al Marco de Privacidad de Datos UE-EE. UU.</p>
   <h3>Tus derechos</h3><p>Puedes pedir acceso, rectificación, supresión, oposición, limitación y portabilidad de tus datos escribiendo a ${contactLine()}. Si crees que no se han respetado, puedes reclamar ante la Agencia Española de Protección de Datos (<a href="https://www.aepd.es" target="_blank" rel="noopener">www.aepd.es</a>).</p>
   <h3>Menores</h3><p>Si tienes menos de 14 años, pide a tu madre, padre o tutor que contacte por ti.</p>
@@ -193,26 +165,6 @@ function cookieBar(){
 }
 setTimeout(cookieBar,700);
 
-/* ---------- Álbum: fotos sin nombre ni precio ---------- */
-function albumTiles(){return S.album.flatMap(it=>(it.photos||[]).map(p=>({it,p})))}
-function paintAlbum(){
- const tiles=albumTiles();$('#album').hidden=!tiles.length;$('#navAlbum').hidden=!tiles.length;if(!tiles.length)return;
- $('#albumGrid').innerHTML=tiles.map((t,i)=>`<button class="atile" data-a="${i}" aria-label="Ver foto ${i+1} del álbum"><img src="${esc(photo(t.p))}" alt="${esc(t.it.name||'Trabajo de uñas')}" loading="lazy">${S.profile.open?'<span class="atile-cta">Quiero uno así</span>':''}</button>`).join('');
- $('#albumGrid').onclick=e=>{const b=e.target.closest('[data-a]');if(b)openAlbum(+b.dataset.a)};
-}
-function openAlbum(i){
- const tiles=albumTiles();if(!tiles.length)return;
- openModal(`<div class="lightbox"><div class="lb-img"><img id="lbImg" alt=""><button class="gnav prev" aria-label="Foto anterior">${ic('left')}</button><button class="gnav next" aria-label="Foto siguiente">${ic('right')}</button></div>
-  <div class="lb-info"><p id="lbText" class="muted"></p><span class="lb-count" id="lbCount"></span>${S.profile.open?`<button class="btn" id="lbWant">${ic('heart')}Quiero uno así</button>`:''}</div></div>`,'wide lb-card');
- const show=k=>{i=(k+tiles.length)%tiles.length;const t=tiles[i];$('#lbImg').src=photo(t.p);$('#lbImg').alt=t.it.name||'Trabajo de uñas';$('#lbText').textContent=[t.it.name,t.it.description].filter(Boolean).join(' · ');$('#lbCount').textContent=`${i+1} / ${tiles.length}`};
- show(i);
- $('.lb-img .prev').onclick=()=>show(i-1);$('.lb-img .next').onclick=()=>show(i+1);
- if(tiles.length<2)document.querySelectorAll('.lb-img .gnav').forEach(b=>b.hidden=true);
- let x0=null;const box=$('.lb-img');box.addEventListener('touchstart',e=>{x0=e.touches[0].clientX},{passive:true});box.addEventListener('touchend',e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;if(Math.abs(dx)>40)show(i+(dx<0?1:-1));x0=null});
- const key=e=>{if(!$('#lbImg')){document.removeEventListener('keydown',key);return}if(e.key==='ArrowLeft')show(i-1);if(e.key==='ArrowRight')show(i+1)};document.addEventListener('keydown',key);
- $('#lbWant')?.addEventListener('click',()=>openCustom({item:tiles[i].it,photo:tiles[i].p}));
-}
-
 /* ---------- Diseño propio ---------- */
 const STYLES=['Minimalista','Francesa','Flores','Brillos y cromados','Piedras y joyas','Pastel','Nude natural','Oscuro o gótico','Animal print','Boda o evento','Temporada (Navidad, Halloween…)','Sorpréndeme'];
 function paintCustom(){
@@ -224,7 +176,7 @@ function compress(file,max=1200,q=.82){return new Promise((res,rej)=>{const r=ne
 function openCustom(ref=null){
  if(!S.profile.open)return toast('Ahora mismo no acepto encargos nuevos');
  const refs=[];
- openModal(`<div class="order-head">${ref?`<img src="${esc(photo(ref.photo))}" alt="">`:`<img src="assets/stamps/mariposa.webp" alt="" class="stamp-img">`}<div><small class="muted">${ref?'Inspirado en mi álbum':'Diseño propio'}</small><h2>${ref?'Quiero uno así':'A tu estilo'}</h2><p class="muted small">Te escribo con una propuesta y el precio. No pagas nada ahora.</p></div></div>
+ openModal(`<div class="order-head">${ref?`<img src="${esc(photo(ref.photo))}" alt="">`:`<img src="assets/stamps/mariposa.webp" alt="" class="stamp-img">`}<div><small class="muted">${ref?'Me interesa':'Diseño propio'}</small><h2>${ref?esc(ref.item.name||'Este diseño'):'A tu estilo'}</h2><p class="muted small">Déjame tus datos y te escribo para hablarlo. No te compromete a nada.</p></div></div>
  <form class="form" id="customForm" novalidate>
   <div class="field"><label for="p_name">Tu nombre</label><input id="p_name" maxlength="80" autocomplete="name" required></div>
   <div class="field"><span class="label">¿Cómo prefieres que te contacte?</span><div class="seg" data-name="p_pref"></div></div>
@@ -232,12 +184,12 @@ function openCustom(ref=null){
   <div class="field"><label for="p_idea">${ref?'¿Qué cambiarías o qué te gustaría?':'Cuéntame tu idea'} <small id="p_ideaHint">${ref?'(opcional)':''}</small></label><textarea id="p_idea" rows="4" maxlength="1000" placeholder="${ref?'Igual pero en rojo, más corto, con menos piedras…':'Colores, dibujos, para qué ocasión, cuándo lo necesitas…'}"></textarea></div>
   <div class="field"><span class="label">Estilo <small>(elige los que quieras)</small></span><div class="seg multi" id="p_styles">${STYLES.map(x=>`<label><input type="checkbox" value="${esc(x)}">${esc(x)}</label>`).join('')}</div></div>
   <div class="field"><label for="p_colors">Colores <small>(opcional)</small></label><input id="p_colors" maxlength="80" placeholder="Rosa empolvado y dorado"></div>
-  <div class="field"><span class="label">Fotos de referencia <small id="p_refHint">${ref?'(opcional, ya va la del álbum)':'(al menos 1, hasta 3)'}</small></span><div class="refs" id="p_refs"></div></div>
+  <div class="field"><span class="label">Fotos de referencia <small id="p_refHint">${ref?'(opcional, ya va la de este diseño)':'(al menos 1, hasta 3)'}</small></span><div class="refs" id="p_refs"></div></div>
   <div class="grid-2"><div class="field"><label for="p_shape">Forma</label><input id="p_shape" list="pShapes" maxlength="40" value="${esc(ref?.item?.shape||'')}" placeholder="La que me recomiendes"><datalist id="pShapes">${['Almond','Coffin','Cuadrada','Redonda','Stiletto'].map(x=>`<option value="${x}">`).join('')}</datalist></div><div class="field"><label for="p_len">Largo</label><input id="p_len" list="pLens" maxlength="20" value="${esc(ref?.item?.length||'')}" placeholder="Corto, medio, largo"><datalist id="pLens">${['Corto','Medio','Largo','Extra largo'].map(x=>`<option value="${x}">`).join('')}</datalist></div></div>
   <div class="field"><span class="label">Tus medidas</span><div class="seg sizes-seg">${[['measure','Me ayudas a medirme'],['know','Sé mis tallas']].map(([k,l],i)=>`<label class="${i?'':'on'}"><input type="radio" name="p_size" value="${k}" ${i?'':'checked'}>${l}</label>`).join('')}</div></div>
   <div class="sizes" hidden>${['Izquierda','Derecha'].map(h=>`<div class="hand"><span>${h}</span>${(h==='Izquierda'?[...FINGERS].reverse():FINGERS).map(f=>`<label><small>${f}</small><input inputmode="numeric" maxlength="2" data-h="${h[0]}" aria-label="Talla ${f} mano ${h.toLowerCase()}"></label>`).join('')}</div>`).join('')}</div>
   <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-  ${consentHtml('preparar tu diseño personalizado y contactarte sobre él')}
+  ${consentHtml(ref?'contactarte sobre este diseño':'preparar tu diseño personalizado y contactarte sobre él')}
   <button class="btn wide" type="submit">Enviar mi idea</button>
   <p class="form-msg" role="status"></p>
  </form>`,'order');
@@ -263,10 +215,10 @@ function openCustom(ref=null){
   const sz=h=>[...form.querySelectorAll(`.sizes input[data-h="${h}"]`)].map(i=>i.value.trim()||'-').join(' ');
   const styles=[...form.querySelectorAll('#p_styles input:checked')].map(i=>i.value);const colors=$('#p_colors').value.trim();
   const c=readContact(form,'p_pref','p');
-  send({kind:'propio',design_id:ref?.item?.id||null,design_name:ref?(ref.item.name||'Foto del álbum').slice(0,80):'Diseño propio',price:null,name:$('#p_name').value.trim().slice(0,80),...c,
-   style:[styles.join(', '),colors&&'Colores: '+colors].filter(Boolean).join(' · ').slice(0,300),refs:ref?['catalog:'+ref.photo,...paths].slice(0,3):paths,
+  send({kind:'propio',design_id:ref?.item?.id||null,design_name:ref?(ref.item.name||'Diseño del catálogo').slice(0,80):'Diseño propio',price:null,name:$('#p_name').value.trim().slice(0,80),...c,
+   style:[styles.join(', '),colors&&'Colores: '+colors].filter(Boolean).join(' · ').slice(0,300),refs:ref&&ref.photo?['catalog:'+ref.photo,...paths].slice(0,3):paths,
    sizes:know?`Izq: ${sz('I')} · Der: ${sz('D')}`:'Necesita que la midan',shape:$('#p_shape').value.trim().slice(0,40),length:$('#p_len').value.trim().slice(0,20),message:idea.slice(0,1000)},
-   form,btn,()=>{refs.forEach(r=>URL.revokeObjectURL(r.url));$('.modal-card').innerHTML=`<button class="close" aria-label="Cerrar" onclick="closeModal()">${ic('close')}</button>`+thanksHtml('¡Idea recibida!','Me encanta que confíes en mí. Te escribo muy pronto con una propuesta y el precio.')});
+   form,btn,()=>{refs.forEach(r=>URL.revokeObjectURL(r.url));$('.modal-card').innerHTML=`<button class="close" aria-label="Cerrar" onclick="closeModal()">${ic('close')}</button>`+thanksHtml(ref?'¡Recibido!':'¡Idea recibida!','Me encanta que te guste. Te escribo muy pronto para hablarlo.')});
  });
  setTimeout(()=>$('#p_name')?.focus(),60);
 }
