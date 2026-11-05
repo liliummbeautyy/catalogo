@@ -17,7 +17,7 @@ const icon=n=>({
  mail:'<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="M4 7l8 6 8-6"/>',
  pin:'<path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
  close:'<path d="M6 6l12 12M18 6L6 18"/>',heart:'<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7a4.3 4.3 0 0 1 7.5 2.8C19.5 15.4 12 20 12 20z"/>',
- left:'<path d="M15 5l-7 7 7 7"/>',right:'<path d="M9 5l7 7-7 7"/>',check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+ left:'<path d="M15 5l-7 7 7 7"/>',right:'<path d="M9 5l7 7-7 7"/>',check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',box:'<path d="M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5L12 12l8.5-4.5M12 12v9"/>',nail:'<path d="M8 21v-9a4 4 0 0 1 8 0v9"/><path d="M9.5 11.5a2.5 2.5 0 0 1 5 0V14h-5z"/>',
  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
  moon:'<path d="M15 4a8.5 8.5 0 1 0 5 13.5A7 7 0 0 1 15 4z"/>'}[n]);
 const ic=n=>`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${icon(n)}</svg>`;
@@ -186,6 +186,10 @@ function openCustom(ref=null){
   <div class="field"><label for="p_colors">Colores <small>(opcional)</small></label><input id="p_colors" maxlength="80" placeholder="Rosa empolvado y dorado"></div>
   <div class="field"><span class="label">Fotos de referencia <small id="p_refHint">${ref?'(opcional, ya va la de este diseño)':'(al menos 1, hasta 3)'}</small></span><div class="refs" id="p_refs"></div></div>
   <div class="grid-2"><div class="field"><label for="p_shape">Forma</label><input id="p_shape" list="pShapes" maxlength="40" value="${esc(ref?.item?.shape||'')}" placeholder="La que me recomiendes"><datalist id="pShapes">${['Almond','Coffin','Cuadrada','Redonda','Stiletto'].map(x=>`<option value="${x}">`).join('')}</datalist></div><div class="field"><label for="p_len">Largo</label><input id="p_len" list="pLens" maxlength="20" value="${esc(ref?.item?.length||'')}" placeholder="Corto, medio, largo"><datalist id="pLens">${['Corto','Medio','Largo','Extra largo'].map(x=>`<option value="${x}">`).join('')}</datalist></div></div>
+  <div class="field"><span class="label">¿Cómo las quieres?</span><div class="kit-pick" role="radiogroup">
+   <label><input type="radio" name="p_kit" value="con"><span class="kp-ic">${ic('box')}</span><span><b>Con kit</b><small>Con todo lo necesario para ponértelas en casa</small></span></label>
+   <label><input type="radio" name="p_kit" value="sin"><span class="kp-ic">${ic('nail')}</span><span><b>Sin kit</b><small>Solo las uñas, ya tienes con qué ponértelas</small></span></label>
+  </div></div>
   <div class="field"><span class="label">Tus medidas</span><div class="seg multi"><label><input type="checkbox" id="p_help">Ayúdame a medirme</label></div></div>
   <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
   ${consentHtml(ref?'contactarte sobre este diseño':'preparar tu diseño personalizado y contactarte sobre él')}
@@ -194,6 +198,7 @@ function openCustom(ref=null){
  </form>`,'order');
  const form=$('#customForm');wireSeg(form,'p_pref','p');
  const surprise=()=>!!form.querySelector('#p_styles input[value="Sorpréndeme"]:checked');
+ form.querySelector('.kit-pick').addEventListener('change',()=>form.querySelectorAll('.kit-pick label').forEach(l=>l.classList.toggle('on',l.querySelector('input').checked)));
  $('#p_help').addEventListener('change',e=>e.target.closest('label').classList.toggle('on',e.target.checked));
  form.querySelector('#p_styles').addEventListener('change',e=>{const l=e.target.closest('label');if(l)l.classList.toggle('on',e.target.checked);
   if(!ref){const sp=surprise();$('#p_refHint').textContent=sp?'(opcional: me dejas sorprenderte)':'(al menos 1, hasta 3)';$('#p_ideaHint').textContent=sp?'(opcional)':''}});
@@ -206,6 +211,8 @@ function openCustom(ref=null){
   const idea=$('#p_idea').value.trim();
   if(!ref&&!surprise()&&!refs.length){msg.textContent='Añade al menos una foto de referencia, o elige el estilo «Sorpréndeme» y te sorprendo yo 💕';msg.className='form-msg err';$('#p_refs').scrollIntoView({block:'center',behavior:'smooth'});return}
   if(!ref&&!surprise()&&!idea){msg.textContent='Cuéntame un poco tu idea';msg.className='form-msg err';$('#p_idea').focus();return}
+  const kit=form.querySelector('input[name="p_kit"]:checked')?.value||'';
+  if(!kit){msg.textContent='Elige si las quieres con kit o sin kit';msg.className='form-msg err';form.querySelector('.kit-pick').scrollIntoView({block:'center',behavior:'smooth'});return}
   const btn=form.querySelector('button[type=submit]');btn.disabled=true;btn.textContent=refs.length?'Subiendo fotos…':'Enviando…';
   const paths=[];
   for(const r of refs){const path=`${S.profile.owner}/${(crypto.randomUUID?crypto.randomUUID():Date.now()+''+Math.random()).replace(/[^a-z0-9-]/gi,'')}.jpg`;const {error}=await sb.storage.from('catalog-refs').upload(path,r.blob,{contentType:'image/jpeg',upsert:false});if(error){btn.disabled=false;btn.textContent='Enviar mi idea';msg.className='form-msg err';msg.textContent='No se han podido subir las fotos. Prueba sin ellas o con otras.';return}paths.push(path)}
@@ -214,7 +221,7 @@ function openCustom(ref=null){
   const c=readContact(form,'p_pref','p');
   send({kind:'propio',design_id:ref?.item?.id||null,design_name:ref?(ref.item.name||'Diseño del catálogo').slice(0,80):'Diseño propio',price:null,name:$('#p_name').value.trim().slice(0,80),...c,
    style:[styles.join(', '),colors&&'Colores: '+colors].filter(Boolean).join(' · ').slice(0,300),refs:ref&&ref.photo?['catalog:'+ref.photo,...paths].slice(0,3):paths,
-   sizes:$('#p_help').checked?'Quiere que la ayudes a medirse':'',shape:$('#p_shape').value.trim().slice(0,40),length:$('#p_len').value.trim().slice(0,20),message:idea.slice(0,1000)},
+   kit,sizes:$('#p_help').checked?'Quiere que la ayudes a medirse':'',shape:$('#p_shape').value.trim().slice(0,40),length:$('#p_len').value.trim().slice(0,20),message:idea.slice(0,1000)},
    form,btn,()=>{refs.forEach(r=>URL.revokeObjectURL(r.url));$('.modal-card').innerHTML=`<button class="close" aria-label="Cerrar" onclick="closeModal()">${ic('close')}</button>`+thanksHtml(ref?'¡Recibido!':'¡Idea recibida!','Me encanta que te guste. Te escribo muy pronto para hablarlo.')});
  });
  setTimeout(()=>$('#p_name')?.focus(),60);
