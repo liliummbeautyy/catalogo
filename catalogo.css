@@ -287,3 +287,21 @@ html,body{overflow-x:clip}
 .kit-pick label.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--field))}
 .kit-pick label:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 @media (max-width:420px){.kit-pick{grid-template-columns:1fr}}
+
+/* ---- Primera vez y datos de clienta ---- */
+.field+.ft-check,.contact-fields+.ft-check{margin-top:4px}
+.ft-check{display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:14px;border:1.5px dashed color-mix(in srgb,var(--accent) 55%,var(--line));background:color-mix(in srgb,var(--accent) 7%,transparent);cursor:pointer;margin:0 0 14px}
+.ft-check input{position:absolute;opacity:0;pointer-events:none}
+.ft-box{width:24px;height:24px;flex:none;border-radius:8px;border:1.5px solid var(--accent);display:grid;place-items:center;color:transparent;background:var(--field);margin-top:1px}
+.ft-box .ic{width:16px;height:16px}
+.ft-check.on{border-style:solid;background:color-mix(in srgb,var(--accent) 13%,transparent)}
+.ft-check.on .ft-box{background:var(--accent);color:#fff}
+.ft-check:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.ft-check>span:last-child{display:flex;flex-direction:column;line-height:1.3}
+.ft-check b{font-size:16.5px}.ft-check small{color:var(--muted);font-size:13.5px;margin-top:2px}
+.client-data{border:1px solid var(--line);border-radius:14px;padding:6px 14px 2px;margin:0 0 14px}
+.client-data legend{padding:0 6px;font-size:15px;color:var(--ink)}
+.client-data legend small{color:var(--muted);font-size:13px}
+.client-data{padding:10px 14px 4px;background:color-mix(in srgb,var(--accent) 4%,transparent)}
+.client-data legend{font-weight:600}
+.client-data legend small{font-weight:400}

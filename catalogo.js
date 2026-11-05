@@ -142,7 +142,7 @@ function openLegal(kind){
   <h3>Legislación</h3><p>Se aplica la legislación española. Si eres consumidora, tienes los derechos que te reconoce la normativa de consumo.</p>`,
  privacidad:`<h2>Política de privacidad</h2>${pend}<p>Conforme al Reglamento (UE) 2016/679 (RGPD) y la Ley Orgánica 3/2018 (LOPDGDD):</p>
   <h3>Responsable</h3><p>${who()}${l.name?' · '+esc(l.biz):''}${l.addr?' · '+esc(l.addr):''}. Contacto: ${contactLine()}.</p>
-  <h3>Qué datos se tratan</h3><p>Los que escribes en los formularios: nombre, teléfono, Instagram o email, tu preferencia de contacto, la forma y el largo de uñas que prefieras, las fotos de referencia que subas y tu mensaje. No pidas ni envíes datos de salud por aquí; si tienes alguna alergia, coméntalo directamente por mensaje.</p>
+  <h3>Qué datos se tratan</h3><p>Los que escribes en los formularios: nombre, teléfono, Instagram o email, tu preferencia de contacto, si es tu primera vez, tu fecha de nacimiento y tu dirección de entrega (si las das), la forma y el largo de uñas que prefieras, las fotos de referencia que subas y tu mensaje. No pidas ni envíes datos de salud por aquí; si tienes alguna alergia, coméntalo directamente por mensaje.</p>
   <h3>Para qué</h3><p>Responder a tus mensajes y contactarte sobre el diseño que te interesa. No se usan para publicidad ni se toman decisiones automatizadas.</p>
   <h3>Base legal</h3><p>Tu consentimiento (art. 6.1.a RGPD) al marcar la casilla, y la aplicación de medidas precontractuales a petición tuya (art. 6.1.b) si decides encargar un diseño. Puedes retirar tu consentimiento cuando quieras.</p>
   <h3>Cuánto tiempo</h3><p>Los mensajes se borran automáticamente un año después de cerrarse y, en todo caso, a los dos años. Si pasas a ser clienta, se conservan mientras lo seas y hasta 2 años después de tu último servicio, salvo obligación legal (por ejemplo, fiscal).</p>
@@ -178,9 +178,16 @@ function openCustom(ref=null){
  const refs=[];
  openModal(`<div class="order-head">${ref?`<img src="${esc(photo(ref.photo))}" alt="">`:`<img src="assets/stamps/mariposa.webp" alt="" class="stamp-img">`}<div><small class="muted">${ref?'Me interesa':'Diseño propio'}</small><h2>${ref?esc(ref.item.name||'Este diseño'):'A tu estilo'}</h2><p class="muted small">Déjame tus datos y te escribo para hablarlo. No te compromete a nada.</p></div></div>
  <form class="form" id="customForm" novalidate>
-  <div class="field"><label for="p_name">Tu nombre</label><input id="p_name" maxlength="80" autocomplete="name" required></div>
-  <div class="field"><span class="label">¿Cómo prefieres que te contacte?</span><div class="seg" data-name="p_pref"></div></div>
-  <div class="contact-fields" data-for="p_pref"></div>
+  <fieldset class="client-data"><legend>Tus datos <small>para crear tu ficha de clienta</small></legend>
+   <div class="field"><label for="p_name">Nombre y apellidos</label><input id="p_name" maxlength="80" autocomplete="name" required></div>
+   <div class="grid-2"><div class="field"><label for="p_phone">Teléfono</label><input id="p_phone" type="tel" maxlength="30" autocomplete="tel" placeholder="600 000 000" required></div>
+   <div class="field"><label for="p_birth">Fecha de nacimiento <small>(opcional)</small></label><input id="p_birth" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" autocomplete="bday"></div></div>
+   <div class="grid-2"><div class="field"><label for="p_instagram">Instagram <small id="p_igReq">(opcional)</small></label><input id="p_instagram" maxlength="60" placeholder="@tu_usuario"></div>
+   <div class="field"><label for="p_email">Email <small id="p_emReq">(opcional)</small></label><input id="p_email" type="email" maxlength="120" autocomplete="email" placeholder="tu@email.com"></div></div>
+   <div class="field"><label for="p_addr">Dirección de entrega <small>(opcional)</small></label><input id="p_addr" maxlength="200" autocomplete="street-address" placeholder="Calle, número, código postal y ciudad"></div>
+  </fieldset>
+  <div class="field"><span class="label">¿Por dónde prefieres que te conteste?</span><div class="seg" id="p_prefSeg">${PREFS.map(([k,l],i)=>`<label class="${i?'':'on'}"><input type="radio" name="p_pref" value="${k}" ${i?'':'checked'}>${l}</label>`).join('')}</div></div>
+  <label class="ft-check"><input type="checkbox" id="p_first"><span class="ft-box">${ic('check')}</span><span><b>Es mi primera vez 🌸</b><small>Tienes un detalle de bienvenida. Es uno por persona y teléfono, y lo confirmo al contestarte.</small></span></label>
   <div class="field"><label for="p_idea">${ref?'¿Qué cambiarías o qué te gustaría?':'Cuéntame tu idea'} <small id="p_ideaHint">${ref?'(opcional)':''}</small></label><textarea id="p_idea" rows="4" maxlength="1000" placeholder="${ref?'Igual pero en rojo, más corto, con menos piedras…':'Colores, dibujos, para qué ocasión, cuándo lo necesitas…'}"></textarea></div>
   <div class="field"><span class="label">Estilo <small>(elige los que quieras)</small></span><div class="seg multi" id="p_styles">${STYLES.map(x=>`<label><input type="checkbox" value="${esc(x)}">${esc(x)}</label>`).join('')}</div></div>
   <div class="field"><label for="p_colors">Colores <small>(opcional)</small></label><input id="p_colors" maxlength="80" placeholder="Rosa empolvado y dorado"></div>
@@ -196,8 +203,11 @@ function openCustom(ref=null){
   <button class="btn wide" type="submit">Enviar mi idea</button>
   <p class="form-msg" role="status"></p>
  </form>`,'order');
- const form=$('#customForm');wireSeg(form,'p_pref','p');
+ const form=$('#customForm');
+ $('#p_prefSeg').addEventListener('change',()=>{const v=form.querySelector('input[name="p_pref"]:checked').value;form.querySelectorAll('#p_prefSeg label').forEach(l=>l.classList.toggle('on',l.querySelector('input').checked));
+  $('#p_instagram').required=v==='instagram';$('#p_email').required=v==='email';$('#p_igReq').textContent=v==='instagram'?'':'(opcional)';$('#p_emReq').textContent=v==='email'?'':'(opcional)'});
  const surprise=()=>!!form.querySelector('#p_styles input[value="Sorpréndeme"]:checked');
+ $('#p_first').addEventListener('change',e=>e.target.closest('.ft-check').classList.toggle('on',e.target.checked));
  form.querySelector('.kit-pick').addEventListener('change',()=>form.querySelectorAll('.kit-pick label').forEach(l=>l.classList.toggle('on',l.querySelector('input').checked)));
  $('#p_help').addEventListener('change',e=>e.target.closest('label').classList.toggle('on',e.target.checked));
  form.querySelector('#p_styles').addEventListener('change',e=>{const l=e.target.closest('label');if(l)l.classList.toggle('on',e.target.checked);
@@ -211,6 +221,8 @@ function openCustom(ref=null){
   const idea=$('#p_idea').value.trim();
   if(!ref&&!surprise()&&!refs.length){msg.textContent='Añade al menos una foto de referencia, o elige el estilo «Sorpréndeme» y te sorprendo yo 💕';msg.className='form-msg err';$('#p_refs').scrollIntoView({block:'center',behavior:'smooth'});return}
   if(!ref&&!surprise()&&!idea){msg.textContent='Cuéntame un poco tu idea';msg.className='form-msg err';$('#p_idea').focus();return}
+  const first=$('#p_first').checked;
+  const birth=$('#p_birth').value.trim();if(birth&&!/^\d{1,2}[\/\-.]\d{1,2}([\/\-.]\d{2,4})?$/.test(birth)){msg.textContent='Escribe tu fecha de nacimiento así: 15/04/1998';msg.className='form-msg err';$('#p_birth').focus();return}
   const kit=form.querySelector('input[name="p_kit"]:checked')?.value||'';
   if(!kit){msg.textContent='Elige si las quieres con kit o sin kit';msg.className='form-msg err';form.querySelector('.kit-pick').scrollIntoView({block:'center',behavior:'smooth'});return}
   const btn=form.querySelector('button[type=submit]');btn.disabled=true;btn.textContent=refs.length?'Subiendo fotos…':'Enviando…';
@@ -221,7 +233,7 @@ function openCustom(ref=null){
   const c=readContact(form,'p_pref','p');
   send({kind:'propio',design_id:ref?.item?.id||null,design_name:ref?(ref.item.name||'Diseño del catálogo').slice(0,80):'Diseño propio',price:null,name:$('#p_name').value.trim().slice(0,80),...c,
    style:[styles.join(', '),colors&&'Colores: '+colors].filter(Boolean).join(' · ').slice(0,300),refs:ref&&ref.photo?['catalog:'+ref.photo,...paths].slice(0,3):paths,
-   kit,sizes:$('#p_help').checked?'Quiere que la ayudes a medirse':'',shape:$('#p_shape').value.trim().slice(0,40),length:$('#p_len').value.trim().slice(0,20),message:idea.slice(0,1000)},
+   kit,first_time:first,birth:birth.replace(/[-.]/g,'/').slice(0,10),address:$('#p_addr').value.trim().slice(0,200),sizes:$('#p_help').checked?'Quiere que la ayudes a medirse':'',shape:$('#p_shape').value.trim().slice(0,40),length:$('#p_len').value.trim().slice(0,20),message:idea.slice(0,1000)},
    form,btn,()=>{refs.forEach(r=>URL.revokeObjectURL(r.url));$('.modal-card').innerHTML=`<button class="close" aria-label="Cerrar" onclick="closeModal()">${ic('close')}</button>`+thanksHtml(ref?'¡Recibido!':'¡Idea recibida!','Me encanta que te guste. Te escribo muy pronto para hablarlo.')});
  });
  setTimeout(()=>$('#p_name')?.focus(),60);
