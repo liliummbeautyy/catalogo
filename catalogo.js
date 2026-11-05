@@ -36,7 +36,7 @@ async function load(){
   if(e1)throw e1;if(!p)throw new Error('Catálogo no encontrado');S.profile=p;
   const {data:d,error:e2}=await sb.from('catalog_designs').select('*').eq('owner',p.owner).eq('visible',true).order('sort',{ascending:true}).order('created_at',{ascending:false});
   if(e2)throw e2;S.designs=(d||[]).filter(x=>x.photos?.length||x.name);
-  paintProfile();paintCats();paintGrid();paintCustom();paintContact();
+  paintProfile();paintCats();paintGrid();paintCustom();paintContact();setTimeout(draftBar,900);
  }catch(e){console.error(e);$('#grid').innerHTML='<p class="muted center">No se ha podido cargar el catálogo ahora mismo. Prueba de nuevo en un momento.</p>'}
 }
 function paintProfile(){
@@ -96,7 +96,7 @@ function readContact(form,name,prefix){
  const g=k=>(form.querySelector(`#${prefix}_${k}`)?.value||'').trim();
  return {contact_pref:form.querySelector(`input[name="${name}"]:checked`).value,phone:g('phone').slice(0,30),instagram:g('instagram').replace(/^https?:\/\/(www\.)?instagram\.com\//,'').replace(/\/$/,'').slice(0,60),email:g('email').slice(0,120)};
 }
-function validate(form){const bad=[...form.querySelectorAll('[required]')].find(i=>i.type==='checkbox'?!i.checked:!i.value.trim());if(bad){bad.focus();return bad.type==='checkbox'?'Marca la casilla para poder enviarlo':'Completa los campos marcados'}const em=form.querySelector('input[type=email]');if(em&&em.value&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em.value))return 'Revisa el email';const ph=form.querySelector('input[type=tel]');if(ph&&ph.value.trim()&&ph.value.replace(/\D/g,'').length<9){ph.focus();return 'Revisa el teléfono: escribe el número completo (9 cifras, o con prefijo si no es de España)'}return ''}
+function validate(form){const bad=[...form.querySelectorAll('[required]')].filter(i=>!i.closest('[hidden]')).find(i=>i.type==='checkbox'?!i.checked:!i.value.trim());if(bad){bad.focus();return bad.type==='checkbox'?'Marca la casilla para poder enviarlo':'Completa los campos marcados'}const em=form.querySelector('input[type=email]');if(em&&em.value&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em.value))return 'Revisa el email';const ph=form.querySelector('input[type=tel]');if(ph&&ph.value.trim()&&ph.value.replace(/\D/g,'').length<9){ph.focus();return 'Revisa el teléfono: escribe el número completo (9 cifras, o con prefijo si no es de España)'}return ''}
 async function send(row,form,btn,doneHtml){
  if(form.querySelector('.hp')?.value)return;
  const err=validate(form);const msg=form.querySelector('.form-msg');if(err){msg.textContent=err;msg.className='form-msg err';return}
@@ -152,8 +152,8 @@ function openLegal(kind){
   <h3>Seguridad</h3><p>La conexión está cifrada (HTTPS). Lo que envías solo lo puede leer la titular. Nadie más tiene acceso, ni siquiera desde esta web.</p>
   <p class="muted small">Versión ${PRIVACY_VERSION}.</p>`,
  cookies:`<h2>Política de cookies</h2><p>Esta web <b>no usa cookies</b> ni herramientas de publicidad o de estadísticas. No se te rastrea.</p>
-  <p>Solo guarda en tu navegador (almacenamiento local) dos preferencias técnicas, permitidas sin consentimiento por el art. 22.2 de la LSSI:</p>
-  <table class="cookie-table"><tr><th>Nombre</th><th>Para qué</th><th>Duración</th></tr><tr><td>lilium_cat_theme</td><td>Recordar si prefieres el modo claro u oscuro</td><td>Hasta que la borres</td></tr><tr><td>lilium_cat_cookies</td><td>Recordar que ya has visto este aviso</td><td>Hasta que la borres</td></tr></table>
+  <p>Solo guarda en tu navegador (almacenamiento local) estas preferencias técnicas, permitidas sin consentimiento por el art. 22.2 de la LSSI:</p>
+  <table class="cookie-table"><tr><th>Nombre</th><th>Para qué</th><th>Duración</th></tr><tr><td>lilium_cat_theme</td><td>Recordar si prefieres el modo claro u oscuro</td><td>Hasta que la borres</td></tr><tr><td>lilium_cat_cookies</td><td>Recordar que ya has visto este aviso</td><td>Hasta que la borres</td></tr><tr><td>lilium_cat_draft</td><td>Guardar lo que vas escribiendo en el formulario (y tus fotos de referencia) por si recargas o sales sin querer. Se borra al enviarlo o al pulsar «Descartar».</td><td>Máximo 7 días</td></tr><tr><td>lilium_cat_me</td><td>Solo si marcas «Recordar mis datos»: tu nombre, teléfono y demás datos del formulario, para no tener que escribirlos otra vez. Se quedan en tu dispositivo y puedes borrarlos con «No soy yo».</td><td>Hasta que la borres</td></tr></table>
   <p>Las tipografías (Google Fonts) y el código de conexión (jsDelivr) se descargan de servicios externos, que reciben tu dirección IP para poder enviártelos. Puedes borrar estos datos desde los ajustes de tu navegador.</p>`}[kind];
  openModal(`<div class="legal">${html}</div>`,'legal-card');
 }
@@ -178,16 +178,21 @@ function openCustom(ref=null){
  const refs=[];
  openModal(`<div class="order-head">${ref?`<img src="${esc(photo(ref.photo))}" alt="">`:`<img src="assets/stamps/mariposa.webp" alt="" class="stamp-img">`}<div><small class="muted">${ref?'Me interesa':'Diseño propio'}</small><h2>${ref?esc(ref.item.name||'Este diseño'):'A tu estilo'}</h2><p class="muted small">Déjame tus datos y te escribo para hablarlo. No te compromete a nada.</p></div></div>
  <form class="form" id="customForm" novalidate>
-  <fieldset class="client-data"><legend>Tus datos <small>para crear tu ficha de clienta</small></legend>
+  <div class="field"><span class="label">¿Es tu primera vez?</span><div class="kit-pick who-pick" role="radiogroup">
+   <label><input type="radio" name="p_who" value="nueva"><span class="kp-ic">🌸</span><span><b>Primera vez</b><small>Tienes un detalle de bienvenida (uno por persona y teléfono)</small></span></label>
+   <label><input type="radio" name="p_who" value="clienta"><span class="kp-ic">💕</span><span><b>Ya soy clienta</b><small>Solo tu nombre y teléfono, ya tengo tu ficha</small></span></label>
+  </div></div>
+  <div class="me-saved" id="p_saved" hidden></div>
+  <fieldset class="client-data" id="p_data" hidden><legend id="p_dataTitle">Tus datos</legend>
    <div class="field"><label for="p_name">Nombre y apellidos</label><input id="p_name" maxlength="80" autocomplete="name" required></div>
    <div class="grid-2"><div class="field"><label for="p_phone">Teléfono</label><input id="p_phone" type="tel" maxlength="30" autocomplete="tel" placeholder="600 000 000" required></div>
-   <div class="field"><label for="p_birth">Fecha de nacimiento <small>(opcional)</small></label><input id="p_birth" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" autocomplete="bday"></div></div>
-   <div class="grid-2"><div class="field"><label for="p_instagram">Instagram <small id="p_igReq">(opcional)</small></label><input id="p_instagram" maxlength="60" placeholder="@tu_usuario"></div>
+   <div class="field only-new"><label for="p_birth">Fecha de nacimiento <small>(opcional)</small></label><input id="p_birth" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" autocomplete="bday"></div></div>
+   <div class="grid-2 only-new"><div class="field"><label for="p_instagram">Instagram <small id="p_igReq">(opcional)</small></label><input id="p_instagram" maxlength="60" placeholder="@tu_usuario"></div>
    <div class="field"><label for="p_email">Email <small id="p_emReq">(opcional)</small></label><input id="p_email" type="email" maxlength="120" autocomplete="email" placeholder="tu@email.com"></div></div>
-   <div class="field"><label for="p_addr">Dirección de entrega <small>(opcional)</small></label><input id="p_addr" maxlength="200" autocomplete="street-address" placeholder="Calle, número, código postal y ciudad"></div>
+   <div class="field only-new"><label for="p_addr">Dirección de entrega <small>(opcional)</small></label><input id="p_addr" maxlength="200" autocomplete="street-address" placeholder="Calle, número, código postal y ciudad"></div>
+   <label class="remember"><input type="checkbox" id="p_remember" checked><span>Recordar mis datos en este dispositivo para la próxima vez</span></label>
   </fieldset>
   <div class="field"><span class="label">¿Por dónde prefieres que te conteste?</span><div class="seg" id="p_prefSeg">${PREFS.map(([k,l],i)=>`<label class="${i?'':'on'}"><input type="radio" name="p_pref" value="${k}" ${i?'':'checked'}>${l}</label>`).join('')}</div></div>
-  <label class="ft-check"><input type="checkbox" id="p_first"><span class="ft-box">${ic('check')}</span><span><b>Es mi primera vez 🌸</b><small>Tienes un detalle de bienvenida. Es uno por persona y teléfono, y lo confirmo al contestarte.</small></span></label>
   <div class="field"><label for="p_idea">${ref?'¿Qué cambiarías o qué te gustaría?':'Cuéntame tu idea'} <small id="p_ideaHint">${ref?'(opcional)':''}</small></label><textarea id="p_idea" rows="4" maxlength="1000" placeholder="${ref?'Igual pero en rojo, más corto, con menos piedras…':'Colores, dibujos, para qué ocasión, cuándo lo necesitas…'}"></textarea></div>
   <div class="field"><span class="label">Estilo <small>(elige los que quieras)</small></span><div class="seg multi" id="p_styles">${STYLES.map(x=>`<label><input type="checkbox" value="${esc(x)}">${esc(x)}</label>`).join('')}</div></div>
   <div class="field"><label for="p_colors">Colores <small>(opcional)</small></label><input id="p_colors" maxlength="80" placeholder="Rosa empolvado y dorado"></div>
@@ -207,21 +212,36 @@ function openCustom(ref=null){
  $('#p_prefSeg').addEventListener('change',()=>{const v=form.querySelector('input[name="p_pref"]:checked').value;form.querySelectorAll('#p_prefSeg label').forEach(l=>l.classList.toggle('on',l.querySelector('input').checked));
   $('#p_instagram').required=v==='instagram';$('#p_email').required=v==='email';$('#p_igReq').textContent=v==='instagram'?'':'(opcional)';$('#p_emReq').textContent=v==='email'?'':'(opcional)'});
  const surprise=()=>!!form.querySelector('#p_styles input[value="Sorpréndeme"]:checked');
- $('#p_first').addEventListener('change',e=>e.target.closest('.ft-check').classList.toggle('on',e.target.checked));
+ const me=loadMe();
+ const setWho=v=>{form.querySelectorAll('.who-pick label').forEach(l=>l.classList.toggle('on',l.querySelector('input').checked));const isNew=v==='nueva';
+  form.querySelectorAll('.only-new').forEach(e=>e.hidden=!isNew);$('#p_dataTitle').innerHTML=isNew?'Tus datos <small>para crear tu ficha de clienta</small>':'Tus datos <small>para encontrar tu ficha</small>';
+  if(me&&!isNew){$('#p_saved').hidden=false;$('#p_data').hidden=true}else{$('#p_saved').hidden=true;$('#p_data').hidden=false}};
+ form.querySelector('.who-pick').addEventListener('change',e=>setWho(e.target.value));
+ if(me){['name','phone','instagram','email','birth','addr'].forEach(k=>{const el=$('#p_'+k);if(el&&me[k])el.value=me[k]});
+  $('#p_saved').innerHTML=`<span class="kp-ic">${ic('check')}</span><span><b>Hola, ${esc(me.name.split(' ')[0])} 👋</b><small>Uso tus datos guardados (${esc(me.phone)})</small></span><button type="button" class="link" id="p_edit">Cambiar</button><button type="button" class="link" id="p_forget">No soy yo</button>`;
+  $('#p_edit').onclick=()=>{$('#p_saved').hidden=true;$('#p_data').hidden=false};
+  $('#p_forget').onclick=()=>{forgetMe();['name','phone','instagram','email','birth','addr'].forEach(k=>{const el=$('#p_'+k);if(el)el.value=''});$('#p_saved').hidden=true;$('#p_data').hidden=false;$('#p_remember').checked=false;toast('He borrado tus datos de este dispositivo')};
+  form.querySelector('input[name="p_who"][value="clienta"]').checked=true;setWho('clienta');
+ }
  form.querySelector('.kit-pick').addEventListener('change',()=>form.querySelectorAll('.kit-pick label').forEach(l=>l.classList.toggle('on',l.querySelector('input').checked)));
  $('#p_help').addEventListener('change',e=>e.target.closest('label').classList.toggle('on',e.target.checked));
  form.querySelector('#p_styles').addEventListener('change',e=>{const l=e.target.closest('label');if(l)l.classList.toggle('on',e.target.checked);
   if(!ref){const sp=surprise();$('#p_refHint').textContent=sp?'(opcional: me dejas sorprenderte)':'(al menos 1, hasta 3)';$('#p_ideaHint').textContent=sp?'(opcional)':''}});
  const drawRefs=()=>{$('#p_refs').innerHTML=refs.map((r,k)=>`<figure><img src="${r.url}" alt="Referencia ${k+1}"><button type="button" class="rm" data-rm="${k}" aria-label="Quitar foto">${ic('close')}</button></figure>`).join('')+(refs.length<3?`<label class="ref-add">${ic('heart')}<span>Añadir foto</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden></label>`:'')};
  $('#p_refs').addEventListener('click',e=>{const b=e.target.closest('[data-rm]');if(!b)return;const [r]=refs.splice(+b.dataset.rm,1);URL.revokeObjectURL(r.url);drawRefs()});
- $('#p_refs').addEventListener('change',async e=>{const files=[...(e.target.files||[])].filter(f=>/^image\//.test(f.type)).slice(0,3-refs.length);for(const f of files){try{const b=await compress(f);refs.push({blob:b,url:URL.createObjectURL(b)})}catch{toast('No se pudo leer esa foto')}}drawRefs()});
+ $('#p_refs').addEventListener('change',async e=>{const files=[...(e.target.files||[])].filter(f=>/^image\//.test(f.type)).slice(0,3-refs.length);for(const f of files){try{const b=await compress(f);refs.push({blob:b,url:URL.createObjectURL(b)})}catch{toast('No se pudo leer esa foto')}}drawRefs();saveDraft()});
  drawRefs();
+ /* Borrador: si recarga o se sale, no pierde lo escrito */
+ const saveDraft=debounce(()=>writeDraft(form,ref,refs),400);form.addEventListener('input',saveDraft);form.addEventListener('change',saveDraft);$('#p_refs').addEventListener('click',()=>setTimeout(saveDraft,50));
+ restoreDraft(form,ref,refs).then(n=>{if(n){drawRefs();toast('He recuperado lo que estabas escribiendo')}});
  form.addEventListener('submit',async e=>{e.preventDefault();if(form.querySelector('.hp')?.value)return;
   const msg=form.querySelector('.form-msg');const err=validate(form);if(err){msg.textContent=err;msg.className='form-msg err';return}
   const idea=$('#p_idea').value.trim();
   if(!ref&&!surprise()&&!refs.length){msg.textContent='Añade al menos una foto de referencia, o elige el estilo «Sorpréndeme» y te sorprendo yo 💕';msg.className='form-msg err';$('#p_refs').scrollIntoView({block:'center',behavior:'smooth'});return}
   if(!ref&&!surprise()&&!idea){msg.textContent='Cuéntame un poco tu idea';msg.className='form-msg err';$('#p_idea').focus();return}
-  const first=$('#p_first').checked;
+  const who=form.querySelector('input[name="p_who"]:checked')?.value;
+  if(!who){msg.textContent='Dime si es tu primera vez o si ya eres clienta';msg.className='form-msg err';form.querySelector('.who-pick').scrollIntoView({block:'center',behavior:'smooth'});return}
+  const first=who==='nueva';
   const birth=$('#p_birth').value.trim();if(birth&&!/^\d{1,2}[\/\-.]\d{1,2}([\/\-.]\d{2,4})?$/.test(birth)){msg.textContent='Escribe tu fecha de nacimiento así: 15/04/1998';msg.className='form-msg err';$('#p_birth').focus();return}
   const kit=form.querySelector('input[name="p_kit"]:checked')?.value||'';
   if(!kit){msg.textContent='Elige si las quieres con kit o sin kit';msg.className='form-msg err';form.querySelector('.kit-pick').scrollIntoView({block:'center',behavior:'smooth'});return}
@@ -231,10 +251,53 @@ function openCustom(ref=null){
   btn.disabled=false;btn.textContent='Enviar mi idea';
   const styles=[...form.querySelectorAll('#p_styles input:checked')].map(i=>i.value);const colors=$('#p_colors').value.trim();
   const c=readContact(form,'p_pref','p');
+  if($('#p_remember').checked)saveMe({name:$('#p_name').value.trim(),phone:c.phone,instagram:c.instagram,email:c.email,birth:$('#p_birth').value.trim(),addr:$('#p_addr').value.trim()});else forgetMe();
   send({kind:'propio',design_id:ref?.item?.id||null,design_name:ref?(ref.item.name||'Diseño del catálogo').slice(0,80):'Diseño propio',price:null,name:$('#p_name').value.trim().slice(0,80),...c,
    style:[styles.join(', '),colors&&'Colores: '+colors].filter(Boolean).join(' · ').slice(0,300),refs:ref&&ref.photo?['catalog:'+ref.photo,...paths].slice(0,3):paths,
    kit,first_time:first,birth:birth.replace(/[-.]/g,'/').slice(0,10),address:$('#p_addr').value.trim().slice(0,200),sizes:$('#p_help').checked?'Quiere que la ayudes a medirse':'',shape:$('#p_shape').value.trim().slice(0,40),length:$('#p_len').value.trim().slice(0,20),message:idea.slice(0,1000)},
-   form,btn,()=>{refs.forEach(r=>URL.revokeObjectURL(r.url));$('.modal-card').innerHTML=`<button class="close" aria-label="Cerrar" onclick="closeModal()">${ic('close')}</button>`+thanksHtml(ref?'¡Recibido!':'¡Idea recibida!','Me encanta que te guste. Te escribo muy pronto para hablarlo.')});
+   form,btn,()=>{clearDraft();refs.forEach(r=>URL.revokeObjectURL(r.url));$('.modal-card').innerHTML=`<button class="close" aria-label="Cerrar" onclick="closeModal()">${ic('close')}</button>`+thanksHtml(ref?'¡Recibido!':'¡Idea recibida!','Me encanta que te guste. Te escribo muy pronto para hablarlo.')});
  });
- setTimeout(()=>$('#p_name')?.focus(),60);
+ setTimeout(()=>{if(!$('#p_name')?.value)$('#p_name')?.focus()},60);
+}
+
+/* Recordar los datos de la clienta en su propio dispositivo (solo en su navegador, nunca se comparte) */
+const ME_KEY='lilium_cat_me';
+function loadMe(){try{const m=JSON.parse(localStorage.getItem(ME_KEY)||'null');return m&&m.name&&m.phone?m:null}catch{return null}}
+function saveMe(m){try{localStorage.setItem(ME_KEY,JSON.stringify(m))}catch{}}
+function forgetMe(){try{localStorage.removeItem(ME_KEY)}catch{}}
+
+/* ---------- Borrador del formulario (en el dispositivo de la clienta) ---------- */
+const DRAFT_KEY='lilium_cat_draft',DRAFT_DAYS=7;
+function debounce(f,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>f(...a),ms)}}
+function blobToData(b){return new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.onerror=()=>r('');fr.readAsDataURL(b)})}
+async function dataToBlob(d){return (await fetch(d)).blob()}
+function readDraft(){try{const d=JSON.parse(localStorage.getItem(DRAFT_KEY)||'null');if(!d)return null;if(Date.now()-d.at>DRAFT_DAYS*864e5){clearDraft();return null}return d}catch{return null}}
+function clearDraft(){try{localStorage.removeItem(DRAFT_KEY)}catch{};document.getElementById('draftBar')?.remove()}
+async function writeDraft(form,ref,refs){
+ if(!form.isConnected)return;
+ const d={at:Date.now(),refId:ref?.item?.id||null,refPhoto:ref?.photo||'',values:{},checks:{},radios:{},photos:[]};
+ form.querySelectorAll('input[id],textarea[id]').forEach(el=>{if(el.type==='file'||el.classList.contains('hp'))return;if(el.type==='checkbox'){if(el.closest('.consent'))return;d.checks[el.id]=el.checked}else if(el.value)d.values[el.id]=el.value});
+ form.querySelectorAll('#p_styles input:checked').forEach(el=>{(d.styles=d.styles||[]).push(el.value)});
+ form.querySelectorAll('input[type=radio]:checked').forEach(el=>d.radios[el.name]=el.value);
+ for(const r of refs){if(!r.data)r.data=await blobToData(r.blob);d.photos.push(r.data)}
+ const empty=!Object.keys(d.values).length&&!d.photos.length&&!d.styles;
+ try{if(empty)localStorage.removeItem(DRAFT_KEY);else localStorage.setItem(DRAFT_KEY,JSON.stringify(d))}catch{try{d.photos=[];localStorage.setItem(DRAFT_KEY,JSON.stringify(d))}catch{}}
+}
+async function restoreDraft(form,ref,refs){
+ const d=readDraft();if(!d||(d.refId||null)!==(ref?.item?.id||null))return 0;let n=0;
+ Object.entries(d.radios||{}).forEach(([name,v])=>{const el=form.querySelector(`input[name="${name}"][value="${CSS.escape(v)}"]`);if(el&&!el.checked){el.checked=true;el.dispatchEvent(new Event('change',{bubbles:true}))}});
+ Object.entries(d.values||{}).forEach(([id,v])=>{const el=form.querySelector('#'+CSS.escape(id));if(el&&!el.value){el.value=v;n++}});
+ Object.entries(d.checks||{}).forEach(([id,v])=>{const el=form.querySelector('#'+CSS.escape(id));if(el&&el.checked!==v){el.checked=v;el.dispatchEvent(new Event('change',{bubbles:true}))}});
+ (d.styles||[]).forEach(v=>{const el=form.querySelector(`#p_styles input[value="${CSS.escape(v)}"]`);if(el&&!el.checked){el.checked=true;el.dispatchEvent(new Event('change',{bubbles:true}));n++}});
+ for(const p of d.photos||[]){if(refs.length>=3)break;try{const b=await dataToBlob(p);refs.push({blob:b,url:URL.createObjectURL(b),data:p});n++}catch{}}
+ return n;
+}
+function draftBar(){
+ const d=readDraft();if(!d||!S.profile?.open||document.getElementById('draftBar'))return;
+ const item=d.refId?S.designs.find(x=>x.id===d.refId):null;if(d.refId&&!item){clearDraft();return}
+ const el=document.createElement('div');el.id='draftBar';el.className='draft-bar';el.setAttribute('role','status');
+ el.innerHTML=`<span>📝</span><p>Tienes ${item?`tu solicitud de <b>${esc(item.name||'un diseño')}</b>`:'tu diseño propio'} a medias.</p><div><button type="button" class="link" id="dbDiscard">Descartar</button><button type="button" class="btn small" id="dbGo">Continuar</button></div>`;
+ document.body.appendChild(el);
+ $('#dbGo').onclick=()=>{el.remove();openCustom(item?{item,photo:d.refPhoto||item.photos?.[0]||''}:null)};
+ $('#dbDiscard').onclick=()=>{clearDraft();toast('Borrador descartado')};
 }
